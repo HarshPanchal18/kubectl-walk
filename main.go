@@ -1,53 +1,82 @@
 package main
 
 import (
-	"flag"
+	"context"
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/serializer/json"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-func walk(node *yaml.Node, path string) {
+// getClientset - loads kubeconfig and returns a Kubernetes clientset
+func getClientset() (*kubernetes.Clientset, error) {
+    kubeconfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+    config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
+    if err != nil {
+        return nil, err
+    }
+    return kubernetes.NewForConfig(config)
+}
+
+func walk(node *yaml.Node, path []string) {
 	switch node.Kind {
 
-	case yaml.MappingNode:
+	case yaml.MappingNode: // YAML object
 		for i := 0; i < len(node.Content); i += 2 {
-			key := node.Content[i].Value
-			value := node.Content[i+1]
+			keyNode := node.Content[i]
+			valueNode := node.Content[i + 1]
 
-			newPath := key
-			if path != "" {
-				newPath = path + "." + key
-			}
-			walk(value, newPath)
+			walk(valueNode, append(path, keyNode.Value))
 		}
 
-	case yaml.SequenceNode:
+	case yaml.SequenceNode: // YAML list: arr[0], arr[1], ...
 		for i, item := range node.Content {
-			newPath := fmt.Sprintf("%s[%d]", path, i)
-			walk(item, newPath)
+			walk(item, append(path, fmt.Sprintf("\b[%d]", i)))
 		}
 
-	default: // scaler
-		fmt.Printf("%s: %s\n", path, node.Value)
+	default: // reached a scaler value (tail)
+		fmt.Printf("%s: %s\n", strings.Join(path, "."), node.Value)
 	}
 }
 
 func main() {
-	filename := flag.Arg(0)
 
-	content, err := os.ReadFile(filename)
+	client, err := getClientset()
 	if err != nil {
-		fmt.Printf("error reading file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error creating Kubernetes client: %v\n", err)
 		os.Exit(1)
 	}
 
-	var root yaml.Node
-	if err := yaml.Unmarshal(content, &root); err != nil {
-		fmt.Printf("error parsing YAML: %v\n", err)
-		os.Exit(1)
+	resource, err := client.AppsV1().Deployments("default").Get(
+		context.TODO(),
+		"console",
+		metav1.GetOptions{},
+	)
+
+	if err != nil {
+		panic(err)
 	}
 
-	walk(root.Content[0], "")
+	// Convert Kubernetes object to YAML
+	scheme := runtime.NewScheme()
+	serializer := json.NewYAMLSerializer(json.DefaultMetaFactory, scheme, scheme)
+	yamlBytes, err := runtime.Encode(serializer, resource)
+	if err != nil {
+		panic(err)
+	}
+
+	// Parse YAML into yaml.Node tree
+	var yamlRoot yaml.Node
+	if err := yaml.Unmarshal(yamlBytes, &yamlRoot); err != nil {
+		panic(err)
+	}
+
+	walk(yamlRoot.Content[0], []string{})
 }
