@@ -9,6 +9,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -23,20 +24,65 @@ import (
 
 func resolveKind(input string) string {
 	switch input {
-	case "po", "pod", "pods":
-		return "pod"
+    case "po", "pod", "pods":
+        return "pod"
+    case "svc", "service", "services":
+        return "service"
+    case "cm", "configmap", "configmaps":
+        return "configmap"
+    case "secret", "secrets":
+        return "secret"
+    case "ns", "namespace", "namespaces":
+        return "namespace"
+    case "no", "node", "nodes":
+        return "node"
+    case "ev", "event", "events":
+        return "event"
+    case "sa", "serviceaccount", "serviceaccounts":
+        return "serviceaccount"
+    case "ep", "endpoints":
+        return "endpoints"
+    case "sc", "storageclass", "storageclasses":
+        return "storageclass"
+    case "pv", "persistentvolume", "persistentvolumes":
+        return "persistentvolume"
+    case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
+        return "persistentvolumeclaim"
+
 	case "deploy", "deployment", "deployments":
 		return "deployment"
-	case "svc", "service", "services":
-		return "service"
-	case "cm", "configmap", "configmaps":
-		return "configmap"
-	case "pv", "persistentvolume", "persistentvolumes":
-		return "persistentvolume"
-	case "pvc", "persistentvolumeclaim", "persistentvolumeclaims":
-		return "persistentvolumeclaim"
+	case "sts", "statefulset", "statefulsets":
+		return "statefulset"
+    case "ds", "daemonset", "daemonsets":
+        return "daemonset"
+    case "rs", "replicaset", "replicasets":
+        return "replicaset"
+
+	case "job", "jobs":
+		return "job"
+	case "cj", "cronjob", "cronjobs":
+		return "cronjob"
+
 	case "ing", "ingress", "ingresses":
-		return "configmap"
+		return "ingress"
+	case "netpol", "networkpolicy", "networkpolicies":
+		return "networkpolicy"
+
+	case "eplice", "endpointsslice", "endpointslices":
+		return "endpointsslice"
+
+    case "role", "roles":
+        return "role"
+    case "rb", "rolebinding", "rolebindings":
+        return "rolebinding"
+    case "cr", "clusterrole", "clusterroles":
+        return "clusterrole"
+    case "crb", "clusterrolebinding", "clusterrolebindings":
+        return "clusterrolebinding"
+
+    case "hpa", "horizontalpodautoscaler", "horizontalpodautoscalers":
+        return "horizontalpodautoscaler"
+
 	default:
 		return input
 	}
@@ -63,21 +109,31 @@ func FetchDynamicObject(
 		return nil, fmt.Errorf("error resolving GVK for %s: %w", kind, err)
 	}
 
-	gvr, err := mapper.ResourceFor(schema.GroupVersionResource{Group: gvk.Group, Version: gvk.Version, Resource: gvk.Kind})
-	if err != nil {
-		return nil, fmt.Errorf("error resolving GVR for %s: %w", kind, err)
-	}
-
 	// runtime-agnostic resource fetching
 	dyn, err := dynamic.NewForConfig(restCfg)
 	if err != nil {
 		return nil, fmt.Errorf("error creating dynamic client: %w", err)
 	}
 
+	// identify resource
+	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
+	if err != nil { return nil, err }
+
+	var resourceInterface dynamic.ResourceInterface
+
+	// Handle scopped object
+	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+		// namespaced resource
+		resourceInterface = dyn.Resource(mapping.Resource).Namespace(ns)
+	} else {
+		// cluster-scoped resource
+		resourceInterface = dyn.Resource(mapping.Resource)
+	}
+
 	// Fetch the object from Kubernetes
-	obj, err := dyn.Resource(gvr).Namespace(ns).Get(ctx, name, metav1.GetOptions{})
+	obj, err := resourceInterface.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("error getting %s/%s/%s (%s): %w", ns, kind, name, gvr.String(), err)
+		return nil, fmt.Errorf("error getting %s/%s/%s (%s): %w", ns, kind, name, gvk.String(), err)
 	}
 
 	return obj, nil
