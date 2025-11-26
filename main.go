@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/spf13/pflag"
@@ -148,6 +149,66 @@ func serializeObject(obj runtime.Object) ([]byte, error) {
 	return runtime.Encode(serializer, obj)
 }
 
+func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
+	// get hierarchical segments
+	parts := strings.Split(entrypoint, ".")
+	current := node
+
+	for _, part := range parts {
+
+		// list index: containers[0]
+		if strings.Contains(part, "[") {
+			// extract name and the index between '[' and ']'
+			name := part[:strings.Index(part, "[")]
+			indexString := part[strings.Index(part, "[") + 1:strings.Index(part, "]")]
+			index, _ := strconv.Atoi(indexString)
+
+			// child object
+			child := getMapValue(current, name)
+			if child == nil {
+				return nil, fmt.Errorf("key %s not found", name)
+			}
+
+			// ensure list exists
+			if child.Kind != yaml.SequenceNode || index >= len(child.Content) {
+				return nil, fmt.Errorf("index [%d] out of range for %s", index, name)
+			}
+
+			// move deeper into the list element
+			current = child.Content[index]
+			continue
+		}
+
+		// regular map key, no list
+        next := getMapValue(current, part)
+        if next == nil {
+            return nil, fmt.Errorf("key %s not found", part)
+        }
+
+		current = next
+	}
+
+	return current, nil
+}
+
+// mapping node: get value for key
+func getMapValue(node *yaml.Node, key string) *yaml.Node {
+    if node.Kind != yaml.MappingNode {
+        return nil
+    }
+
+	// Content[0] = key1, Content[1] = value1
+	// Content[1] = key2, Content[1] = value2...
+    for i := 0; i < len(node.Content); i += 2 {
+		if node.Content[i].Value == key {
+			// Value for a given key
+            return node.Content[i+1]
+        }
+    }
+
+    return nil
+}
+
 func walk(node *yaml.Node, path []string) {
 	switch node.Kind {
 
@@ -180,9 +241,11 @@ func main() {
 
 	// var help bool
 	var namespace string
+	var entry string
 
 	// pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of kind")
+	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of object")
 	pflag.Parse()
 
 	args := pflag.Args()
@@ -205,6 +268,17 @@ func main() {
 	var yamlRoot yaml.Node
 	yaml.Unmarshal(yamlBytes, &yamlRoot)
 
-	walk(yamlRoot.Content[0], []string{})
+	rootNode := yamlRoot.Content[0]
 
+	if entry == "" {
+		walk(rootNode, []string{})
+		return
+	}
+
+	rootNode, err = findNodeByPath(rootNode, entry)
+	if err != nil {
+		panic(err)
+	}
+
+	walk(rootNode, strings.Split(entry, "."))
 }
