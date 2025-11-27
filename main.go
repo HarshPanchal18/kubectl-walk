@@ -230,6 +230,11 @@ func walk(node *yaml.Node, path []string) {
 	}
 }
 
+func stdinHasData() bool {
+	stat, _ := os.Stdin.Stat()
+	return (stat.Mode() & os.ModeCharDevice) == 0
+}
+
 func main() {
 
 	kubeConfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
@@ -242,11 +247,32 @@ func main() {
 	// var help bool
 	var namespace string
 	var entry string
+	var file string
+	// var pure string
 
 	// pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of kind")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of object")
+	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
+	// pflag.StringVarP(&pure, "pure", "p", "", "Strip auto-generated fields")
 	pflag.Parse()
+
+	// Parse YAML into yaml.Node tree
+	var yamlRoot yaml.Node
+
+	// Read from .yaml file
+	if file != "" {
+		yamlBytes, err := os.ReadFile(file)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error reading file %s: %v\n", file, err)
+			os.Exit(1)
+		}
+
+		yaml.Unmarshal(yamlBytes, &yamlRoot)
+		rootNode := yamlRoot.Content[0]
+		walk(rootNode, []string{})
+		return
+	}
 
 	args := pflag.Args()
 	kind := resolveKind(strings.ToLower(args[0]))
@@ -264,10 +290,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Parse YAML into yaml.Node tree
-	var yamlRoot yaml.Node
 	yaml.Unmarshal(yamlBytes, &yamlRoot)
-
 	rootNode := yamlRoot.Content[0]
 
 	if entry == "" {
