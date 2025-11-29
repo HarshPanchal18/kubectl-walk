@@ -24,6 +24,17 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+// Supported CLI flags
+var (
+	help bool
+	namespace string
+	entry string
+	file string
+	outputFile string
+	pure bool
+)
+
+// Resolve kubernetes resource identifier
 func resolveKind(input string) string {
 	switch input {
     case "po", "pod", "pods":
@@ -121,19 +132,19 @@ func FetchDynamicObject(
 	mapping, err := mapper.RESTMapping(gvk.GroupKind(), gvk.Version)
 	if err != nil { return nil, err }
 
-	var resourceInterface dynamic.ResourceInterface
+	var resource dynamic.ResourceInterface
 
 	// Handle scopped object
 	if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
 		// namespaced resource
-		resourceInterface = dyn.Resource(mapping.Resource).Namespace(ns)
+		resource = dyn.Resource(mapping.Resource).Namespace(ns)
 	} else {
 		// cluster-scoped resource
-		resourceInterface = dyn.Resource(mapping.Resource)
+		resource = dyn.Resource(mapping.Resource)
 	}
 
 	// Fetch the object from Kubernetes
-	obj, err := resourceInterface.Get(ctx, name, metav1.GetOptions{})
+	obj, err := resource.Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("error getting %s/%s/%s (%s): %w", ns, kind, name, gvk.String(), err)
 	}
@@ -183,7 +194,7 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		// regular map key, no list
         next := getMapValue(current, part)
         if next == nil {
-            return nil, fmt.Errorf("key %s not found", part)
+            return nil, fmt.Errorf("invalid format: %s", entrypoint)
         }
 
 		current = next
@@ -245,39 +256,57 @@ func walk(node *yaml.Node, path []string, out io.Writer) {
 	}
 }
 
-// CLI flags
-var help bool
-var namespace string
-var entry string
-var file string
-var outputFile string
-var pure bool
-
 func prepareCliFlags() {
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of kind")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
-	pflag.StringVarP(&outputFile, "output-file", "o", "", "Write inside file instead of stdin")
+	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.Parse()
 }
 
-func main() {
+func printUsage() {
+	fmt.Println("Flatten nested objects of the YAML.")
+	fmt.Println("$ kubectl walk pod nginx --entry spec.containers")
+	fmt.Print(
+		"spec.containers[0].image: nginx\n" +
+		"spec.containers[0].imagePullPolicy: Always\n" +
+		"spec.containers[0].name: nginx-pod\n" +
+		"spec.containers[0].terminationMessagePath: /dev/termination-log\n" +
+		"spec.containers[0].terminationMessagePolicy: File\n" +
+		"spec.containers[0].volumeMounts[0].mountPath: /var/run/secrets/kubernetes.io/serviceaccount\n" +
+		"spec.containers[0].volumeMounts[0].name: kube-api-access-vvbkx\n" +
+		"spec.containers[0].volumeMounts[0].readOnly: true\n")
 
-	kubeConfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
-	if err != nil {
-		panic("error connecting Kubernetes: " + err.Error())
-	}
+	fmt.Println("Usage:")
+	pflag.PrintDefaults()
+}
+
+func main() {
 
 	prepareCliFlags()
 
+	if help {
+		printUsage()
+		return
+	}
+
+	path := []string{}
+	if entry != "" {
+		path = strings.Split(entry, ".")
+	}
+
+	var err error
 	out := os.Stdout
 
+	// Create a file if -o provided
 	if outputFile != "" {
 		out, err = os.Create(outputFile)
-		if err != nil { panic(err) }
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
 		defer out.Close()
 	}
 
@@ -288,37 +317,54 @@ func main() {
 	if file != "" {
 		yamlBytes, err := os.ReadFile(file)
 		if err != nil {
-			panic("error reading file\n" + file + ":" + err.Error() + "\n")
+			fmt.Println("error reading file\n" + file + ":" + err.Error() + "\n")
+			return
 		}
 
 		yaml.Unmarshal(yamlBytes, &yamlRoot)
 		rootNode := yamlRoot.Content[0]
-		walk(rootNode, []string{}, out)
+		walk(rootNode, path, out)
+		return
+	}
+
+	// Connect to kubernetes
+	kubeConfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
+	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	if err != nil {
+		fmt.Println("error connecting Kubernetes: " + err.Error())
 		return
 	}
 
 	args := pflag.Args()
 	kind := resolveKind(strings.ToLower(args[0]))
-	resourceName := strings.ToLower(args[1])
+	kindName := strings.ToLower(args[1])
 
-	obj, err := FetchDynamicObject(context.TODO(), restConfig, kind, namespace, resourceName)
-	if err != nil { panic(err) }
+	// Read a Kubernetes resource
+	obj, err := FetchDynamicObject(context.TODO(), restConfig, kind, namespace, kindName)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	yamlBytes, err := serializeObject(obj)
 	if err != nil {
-		panic("serialization error: " + err.Error())
+		fmt.Println("serialization error: " + err.Error())
+		return
 	}
 
 	yaml.Unmarshal(yamlBytes, &yamlRoot)
 	rootNode := yamlRoot.Content[0]
 
 	if entry == "" {
-		walk(rootNode, []string{}, out)
+		walk(rootNode, path, out)
 		return
 	}
 
-	rootNode, err = findNodeByPath(rootNode, entry)
-	if err != nil { panic(err) }
+	rootNode, err = findNodeByPath(&yamlRoot, entry)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
-	walk(rootNode, strings.Split(entry, "."), out)
+	walk(rootNode, path, out)
 }
