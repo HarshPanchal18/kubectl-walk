@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -31,6 +30,7 @@ var (
 	entry string
 	file string
 	outputFile string
+	kubeConfigPath string
 	pure bool
 )
 
@@ -262,6 +262,7 @@ func prepareCliFlags() {
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
+	pflag.StringVarP(&kubeConfigPath, "kubeconfig", "c", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.Parse()
 }
@@ -292,9 +293,9 @@ func main() {
 		return
 	}
 
-	path := []string{}
+	entryPath := []string{}
 	if entry != "" {
-		path = strings.Split(entry, ".")
+		entryPath = strings.Split(entry, ".")
 	}
 
 	var err error
@@ -323,13 +324,11 @@ func main() {
 
 		yaml.Unmarshal(yamlBytes, &yamlRoot)
 		rootNode := yamlRoot.Content[0]
-		walk(rootNode, path, out)
+		walk(rootNode, entryPath, out)
 		return
 	}
 
-	// Connect to kubernetes
-	kubeConfig := filepath.Join(os.Getenv("HOME"), ".kube", "config")
-	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfig)
+	restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 	if err != nil {
 		fmt.Println("error connecting Kubernetes: " + err.Error())
 		return
@@ -356,7 +355,7 @@ func main() {
 	rootNode := yamlRoot.Content[0]
 
 	if entry == "" {
-		walk(rootNode, path, out)
+		walk(rootNode, entryPath, out)
 		return
 	}
 
@@ -366,5 +365,5 @@ func main() {
 		return
 	}
 
-	walk(rootNode, path, out)
+	walk(rootNode, entryPath, out)
 }
