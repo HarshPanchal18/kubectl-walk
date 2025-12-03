@@ -71,6 +71,7 @@ kubectl plugin list
 
 ## CLI flags
 
+- `--all`, `-A` : Include empty object value.
 - `--depth`, `-d`: depth of walking path
 - `--entry`, `-e`: dotted entrypoint (e.g. `spec.containers[0].image`).
 - `--file`, `-f`: read YAML from file instead of the cluster.
