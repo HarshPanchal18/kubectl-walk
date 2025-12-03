@@ -289,7 +289,10 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		}
 
 		for i, item := range node.Content {
-			walk(item, append(path, fmt.Sprintf("\b[%d]", i)), out, nextRem)
+			p := make([]string, len(path))
+			copy(p, path)
+			p[len(p) - 1] += fmt.Sprintf("[%d]", i)
+			walk(item, p, out, nextRem)
 		}
 
 	default: // reached a scaler value (tail)
