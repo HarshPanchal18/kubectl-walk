@@ -197,7 +197,7 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		// regular map key, no list
         next := getMapValue(current, part)
         if next == nil {
-            return nil, fmt.Errorf("invalid format: %s", entrypoint)
+            return nil, fmt.Errorf("invalid format/entrypoint provided: %s", entrypoint)
         }
 
 		current = next
@@ -324,7 +324,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 func prepareCliFlags() {
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
-	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of kind")
+	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of resource")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
@@ -392,6 +392,12 @@ func main() {
 
 		yaml.Unmarshal(yamlBytes, &yamlRoot)
 		rootNode := yamlRoot.Content[0]
+		rootNode, err = findNodeByPath(rootNode, entry)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+
 		walk(rootNode, entryPath, out, depth)
 		return
 	}
@@ -427,7 +433,7 @@ func main() {
 		return
 	}
 
-	rootNode, err = findNodeByPath(&yamlRoot, entry)
+	rootNode, err = findNodeByPath(rootNode, entry)
 	if err != nil {
 		fmt.Println(err)
 		return
