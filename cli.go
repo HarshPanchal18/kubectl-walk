@@ -18,18 +18,23 @@ var (
 	pure bool
 	depth int
 	includeEmpty bool
+	grep string
 )
 
 func prepareCliFlags() {
-	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of resource")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.StringVarP(&kubeConfigPath, "kubeconfig", "c", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
+	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
+
+	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
-	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking")
 	pflag.BoolVarP(&includeEmpty, "--all", "A", false, "Include empty values")
+
+	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking")
+
 	pflag.Parse()
 }
 

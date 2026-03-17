@@ -62,8 +62,15 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		// If the scalar contains newlines or was originally a block scalar, preserve it as a literal block.
 		val := node.Value
 		if node.Kind == yaml.ScalarNode && (strings.Contains(val, "\n") || node.Style == yaml.LiteralStyle || node.Style == yaml.FoldedStyle) {
-			fmt.Fprintf(out, "%s: |-\n", strings.Join(path, "."))
 			lines := strings.Split(val, "\n")
+			joined := strings.Join(lines, "\n")
+
+			// --grep
+			if !matchGrep(joined) {
+				return
+			}
+
+			fmt.Fprintf(out, "%s: |-\n", strings.Join(path, "."))
 
 			for i, line := range lines {
 				// avoid printing an extra trailing line when Split yields a trailing empty string
@@ -78,11 +85,22 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 		// For single-line scalars that include YAML-sensitive characters, emit a quoted value.
 		if strings.ContainsAny(val, ":[]{},") || strings.HasPrefix(val, " ") || strings.HasSuffix(val, " ") {
+			// --grep
+			if !matchGrep(val) {
+				return
+			}
+
 			escaped := strings.ReplaceAll(val, "\"", "\\\"")
 			fmt.Fprintf(out, "%s: \"%s\"\n", strings.Join(path, "."), escaped)
 			return
 		}
 
-		fmt.Fprintf(out, "%s: %s\n", strings.Join(path, "."), val)
+		// --grep
+		if !matchGrep(val) {
+			return
+		}
+
+		line := fmt.Sprintf("%s: %s", strings.Join(path, "."), val)
+		fmt.Fprintln(out, line)
 	}
 }
