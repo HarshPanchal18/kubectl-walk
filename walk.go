@@ -59,6 +59,10 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		}
 
 	default: // reached a scaler value (tail)
+
+		// Line to print
+		var line string
+
 		// If the scalar contains newlines or was originally a block scalar, preserve it as a literal block.
 		val := node.Value
 		if node.Kind == yaml.ScalarNode && (strings.Contains(val, "\n") || node.Style == yaml.LiteralStyle || node.Style == yaml.FoldedStyle) {
@@ -70,7 +74,8 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 				return
 			}
 
-			fmt.Fprintf(out, "%s: |-\n", strings.Join(path, "."))
+			line = fmt.Sprintf("%s: |-\n", strings.Join(path, "."))
+			fmt.Fprintln(out, line)
 
 			for i, line := range lines {
 				// avoid printing an extra trailing line when Split yields a trailing empty string
@@ -90,8 +95,16 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 				return
 			}
 
-			escaped := strings.ReplaceAll(val, "\"", "\\\"")
-			fmt.Fprintf(out, "%s: \"%s\"\n", strings.Join(path, "."), escaped)
+			// --keys
+			if keysOnly {
+				line = strings.Join(path, ".")
+				fmt.Fprintln(out, line)
+				return
+			}
+
+			escapedValue := strings.ReplaceAll(val, "\"", "\\\"")
+			line = fmt.Sprintf("%s: \"%s\"", strings.Join(path, "."), escapedValue)
+			fmt.Fprintln(out, line)
 			return
 		}
 
@@ -100,7 +113,14 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 			return
 		}
 
-		line := fmt.Sprintf("%s: %s", strings.Join(path, "."), val)
+		// --keys
+		if keysOnly {
+			line = strings.Join(path, ".")
+			fmt.Fprintln(out, line)
+			return
+		}
+
+		line = fmt.Sprintf("%s: %s", strings.Join(path, "."), val)
 		fmt.Fprintln(out, line)
 	}
 }
