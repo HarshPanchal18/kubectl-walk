@@ -124,3 +124,43 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		fmt.Fprintln(out, line)
 	}
 }
+
+func walkTree(node *yaml.Node, prefix string, isLast bool, key string, out io.Writer) {
+
+	connector := "├── "
+	nextPrefix := prefix + "│   "
+
+	if isLast {
+		connector = "└── "
+		nextPrefix = prefix + "    "
+	}
+
+	if key != "" {
+		fmt.Fprintf(out, "%s%s%s = %s\n", prefix, connector, key, node.Value)
+	}
+
+	switch node.Kind {
+
+	case yaml.MappingNode:
+
+		count := len(node.Content) / 2
+		for i := 0; i < len(node.Content); i += 2 {
+
+			k := node.Content[i].Value
+			v := node.Content[i+1]
+
+			last := (i/2) == count-1
+			walkTree(v, nextPrefix, last, k, out)
+		}
+
+	case yaml.SequenceNode:
+
+		for i, item := range node.Content {
+
+			idx := fmt.Sprintf("[%d]", i)
+			last := i == len(node.Content)-1
+
+			walkTree(item, nextPrefix, last, idx, out)
+		}
+	}
+}

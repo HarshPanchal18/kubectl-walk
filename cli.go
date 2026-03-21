@@ -20,6 +20,7 @@ var (
 	includeEmpty bool
 	grep string
 	keysOnly bool
+	tree bool
 )
 
 func prepareCliFlags() {
@@ -34,6 +35,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.BoolVarP(&includeEmpty, "all", "A", false, "Include empty values")
 	pflag.BoolVar(&keysOnly, "keys", false, "Include keys only")
+	pflag.BoolVar(&tree, "tree", false, "Render YAML structure as tree")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
