@@ -71,7 +71,7 @@ func processYaml(rootNode *yaml.Node, out io.Writer) error {
 
 	if tree {
 		fmt.Println(strings.Join(path,"."))
-		walkTree(node, "", true, "", out)
+		walkTree(node, "", out)
 		return nil
 	}
 

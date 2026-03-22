@@ -21,6 +21,7 @@ var (
 	grep string
 	keysOnly bool
 	tree bool
+	find string
 )
 
 func prepareCliFlags() {
@@ -30,12 +31,13 @@ func prepareCliFlags() {
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
 	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
+	pflag.StringVar(&find, "find", "", "Filter paths by key substring")
 
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.BoolVarP(&includeEmpty, "all", "A", false, "Include empty values")
 	pflag.BoolVar(&keysOnly, "keys", false, "Include keys only")
-	pflag.BoolVar(&tree, "tree", false, "Render YAML structure as tree")
+	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
@@ -54,6 +56,7 @@ func printUsage() {
 		"spec.containers[0].volumeMounts[0].mountPath: /var/run/secrets/kubernetes.io/serviceaccount\n" +
 		"spec.containers[0].volumeMounts[0].name: kube-api-access-vvbkx\n" +
 		"spec.containers[0].volumeMounts[0].readOnly: true\n")
+	fmt.Println()
 
 	fmt.Println("$ kubectl walk pod nginx --entry spec.containers --keys")
 	fmt.Print(
@@ -65,6 +68,7 @@ func printUsage() {
 		"spec.containers[0].volumeMounts[0].mountPath\n" +
 		"spec.containers[0].volumeMounts[0].name\n" +
 		"spec.containers[0].volumeMounts[0].readOnly\n")
+	fmt.Println()
 
 	fmt.Println("Usage:")
 	pflag.PrintDefaults()
