@@ -60,11 +60,18 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 	default: // reached a scaler value (tail)
 
+		val:= node.Value
+		key := strings.Join(path, ".")
+
+		// --find
+		if !findKey(key) {
+			return
+		}
+
 		// Line to print
 		var line string
 
 		// If the scalar contains newlines or was originally a block scalar, preserve it as a literal block.
-		val := node.Value
 		if node.Kind == yaml.ScalarNode && (strings.Contains(val, "\n") || node.Style == yaml.LiteralStyle || node.Style == yaml.FoldedStyle) {
 			lines := strings.Split(val, "\n")
 			joined := strings.Join(lines, "\n")

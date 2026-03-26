@@ -85,3 +85,10 @@ func matchGrep(val string) bool {
 	}
 	return strings.Contains(val, grep)
 }
+
+func findKey(val string) bool {
+	if find == "" {
+		return true
+	}
+	return strings.Contains(val, find)
+}

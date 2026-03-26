@@ -31,7 +31,7 @@ func prepareCliFlags() {
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
 	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
-	pflag.StringVar(&find, "find", "", "Filter paths by key substring")
+	pflag.StringVar(&find, "find", "", "Search paths by field name")
 
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
