@@ -22,6 +22,7 @@ var (
 	keysOnly bool
 	tree bool
 	find string
+	valuesOnly bool
 )
 
 func prepareCliFlags() {
@@ -38,6 +39,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&includeEmpty, "all", "A", false, "Include empty values")
 	pflag.BoolVar(&keysOnly, "keys", false, "Include keys only")
 	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
+	pflag.BoolVar(&valuesOnly, "values", false, "Include values only")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 

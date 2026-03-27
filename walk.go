@@ -63,6 +63,19 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		val:= node.Value
 		key := strings.Join(path, ".")
 
+		if valuesOnly {
+			if node.Kind == yaml.ScalarNode {
+				val := node.Value
+
+				if !findKey(key) || !matchGrep(val) {
+					return
+				}
+
+				fmt.Fprintln(out, val)
+			}
+			return
+		}
+
 		// --find
 		if !findKey(key) {
 			return

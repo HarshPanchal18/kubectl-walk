@@ -10,16 +10,18 @@ Supports any YAML that ever exists, not only for Kubernetes resource(s).
 |---|---|
 | `--all`, `-A` | Include empty object value. |
 | `--entry`, `-e`| Dotted entrypoint (e.g. `spec.template`) to start walking from. |
-| `--depth`, `-d`| Depth of walking path |
+| `--depth`, `-d`| Depth of walking down the path |
 | `--file`, `-f`| Read YAML from file instead of the cluster. |
-| `--grep`, `-g`| Filter output paths by value substring. |
+| `--find`, | Search in keys by substring |
+| `--grep`, `-g`| Search in values by substring |
 | `--help`, `-h`| Show help message. |
-| `--kubeconfig`, `-c`| Path to kubeconfig (default `$HOME/.kube/config`). |
+| `--kubeconfig` | Path to kubeconfig (default `$HOME/.kube/config`). |
 | `--keys` | Include keys only. Ignoring values. |
 | `--namespace`, `-n`| Namespace (default `default`) of resource. |
 | `--output`, `-o`| Write output to a file. |
 | `--pure`, `-p`| Strip auto-generated fields when walking. |
 | `--tree`, `-t` | Show fields in tree branch structure. |
+| `--values` | Include values only. Takes priority when provided with `--keys`. |
 
 ## Overview
 
