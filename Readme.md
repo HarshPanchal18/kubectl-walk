@@ -56,7 +56,7 @@ spec.containers[0].name: nginx-pod
 
 ```bash
 # Build the binary from the repository root
-go build -o kubectl-walk main.go
+go build -o kubectl-walk
 
 # Put binary into the $PATH
 chmod +x kubectl-walk

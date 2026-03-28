@@ -18,6 +18,11 @@ func main() {
 		return
 	}
 
+	if showVersion {
+		fmt.Println(version) // go build -ldflags="-X main.version=v1.0.0 -s -w"
+		return
+	}
+
 	var err error
 	out := os.Stdout
 

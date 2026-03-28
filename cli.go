@@ -23,6 +23,7 @@ var (
 	tree bool
 	find string
 	valuesOnly bool
+	showVersion bool
 )
 
 func prepareCliFlags() {
@@ -40,6 +41,7 @@ func prepareCliFlags() {
 	pflag.BoolVar(&keysOnly, "keys", false, "Include keys only")
 	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
 	pflag.BoolVar(&valuesOnly, "values", false, "Include values only")
+	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
