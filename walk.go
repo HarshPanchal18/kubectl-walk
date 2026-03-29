@@ -19,7 +19,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 	case yaml.MappingNode: // YAML object
 		if remain == 0 {
-			fmt.Fprintf(out, "%s: <object>\n", strings.Join(path, "."))
+			fmt.Fprintf(out, "%s: <object>\n", joinPath(path))
 			return
 		}
 
@@ -42,7 +42,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 	case yaml.SequenceNode: // YAML list: arr[0], arr[1], ...
 		if remain == 0 {
-			fmt.Fprintf(out, "%s: <array>\n", strings.Join(path, "."))
+			fmt.Fprintf(out, "%s: <array>\n", joinPath(path))
 			return
 		}
 
@@ -52,8 +52,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		}
 
 		for i, item := range node.Content {
-			p := make([]string, len(path))
-			copy(p, path)
+			p := append([]string{}, path...)
 			p[len(p)-1] += fmt.Sprintf("[%d]", i)
 			walk(item, p, out, nextRem)
 		}
@@ -86,16 +85,15 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 		// If the scalar contains newlines or was originally a block scalar, preserve it as a literal block.
 		if node.Kind == yaml.ScalarNode && (strings.Contains(val, "\n") || node.Style == yaml.LiteralStyle || node.Style == yaml.FoldedStyle) {
-			lines := strings.Split(val, "\n")
-			joined := strings.Join(lines, "\n")
-
 			// --grep
-			if !matchGrep(joined) {
+			if !matchGrep(val) {
 				return
 			}
 
-			line = fmt.Sprintf("%s: |-\n", strings.Join(path, "."))
+			line = fmt.Sprintf("%s: |-\n", joinPath(path))
 			fmt.Fprintln(out, line)
+
+			lines := strings.Split(val, "\n")
 
 			for i, line := range lines {
 				// avoid printing an extra trailing line when Split yields a trailing empty string
@@ -117,13 +115,13 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 			// --keys
 			if keysOnly {
-				line = strings.Join(path, ".")
+				line = joinPath(path)
 				fmt.Fprintln(out, line)
 				return
 			}
 
 			escapedValue := strings.ReplaceAll(val, "\"", "\\\"")
-			line = fmt.Sprintf("%s: \"%s\"", strings.Join(path, "."), escapedValue)
+			line = fmt.Sprintf("%s: \"%s\"", joinPath(path), escapedValue)
 			fmt.Fprintln(out, line)
 			return
 		}
@@ -135,12 +133,12 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 
 		// --keys
 		if keysOnly {
-			line = strings.Join(path, ".")
+			line = joinPath(path)
 			fmt.Fprintln(out, line)
 			return
 		}
 
-		line = fmt.Sprintf("%s: %s", strings.Join(path, "."), val)
+		line = fmt.Sprintf("%s: %s", joinPath(path), val)
 		fmt.Fprintln(out, line)
 	}
 }

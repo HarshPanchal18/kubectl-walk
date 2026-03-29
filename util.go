@@ -94,3 +94,7 @@ func findKey(val string) bool {
 	}
 	return strings.Contains(val, find)
 }
+
+func joinPath(path []string) string {
+    return strings.Join(path, ".")
+}

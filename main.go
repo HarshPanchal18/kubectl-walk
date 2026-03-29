@@ -13,15 +13,8 @@ func main() {
 
 	prepareCliFlags()
 
-	if help {
-		printUsage()
-		return
-	}
-
-	if showVersion {
-		fmt.Println(version) // go build -ldflags="-X main.version=v1.0.0 -s -w"
-		return
-	}
+	// Check --help and --version ahead of further execution
+	sanitizeArgs()
 
 	var err error
 	out := os.Stdout
@@ -30,7 +23,7 @@ func main() {
 	if outputFile != "" {
 		out, err = os.Create(outputFile)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("error: ", err)
 			return
 		}
 		defer out.Close()
@@ -42,13 +35,13 @@ func main() {
 	if file != "" {
 		rootNode, err = loadYamlFromFile(file)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("error: ", err)
 			return
 		}
 	} else {
 		args := pflag.Args()
 		if len(args) < 2 {
-			fmt.Println("kind and name required")
+			fmt.Println("error: kind and name required")
 			return
 		}
 		kind := resolveKind(strings.ToLower(args[0]))
@@ -56,12 +49,12 @@ func main() {
 
 		rootNode, err = loadYamlFromCluster(kind, namespace, name)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Println("error: ", err)
 			return
 		}
 	}
 
 	if err := processYaml(rootNode, out); err != nil {
-		fmt.Println(err)
+		fmt.Println("error: ", err)
 	}
 }

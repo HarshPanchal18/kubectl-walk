@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"runtime"
 
 	"github.com/spf13/pflag"
 )
@@ -50,30 +51,40 @@ func prepareCliFlags() {
 
 func printUsage() {
 	fmt.Println("Flatten nested objects of the YAML.")
-	fmt.Println("$ kubectl walk pod nginx --entry spec.containers")
-	fmt.Print(
-		"spec.containers[0].image: nginx\n" +
-		"spec.containers[0].imagePullPolicy: Always\n" +
-		"spec.containers[0].name: nginx-pod\n" +
-		"spec.containers[0].terminationMessagePath: /dev/termination-log\n" +
-		"spec.containers[0].terminationMessagePolicy: File\n" +
-		"spec.containers[0].volumeMounts[0].mountPath: /var/run/secrets/kubernetes.io/serviceaccount\n" +
-		"spec.containers[0].volumeMounts[0].name: kube-api-access-vvbkx\n" +
-		"spec.containers[0].volumeMounts[0].readOnly: true\n")
-	fmt.Println()
 
-	fmt.Println("$ kubectl walk pod nginx --entry spec.containers --keys")
-	fmt.Print(
-		"spec.containers[0].image\n" +
-		"spec.containers[0].imagePullPolicy\n" +
-		"spec.containers[0].name\n" +
-		"spec.containers[0].terminationMessagePath\n" +
-		"spec.containers[0].terminationMessagePolicy\n" +
-		"spec.containers[0].volumeMounts[0].mountPath\n" +
-		"spec.containers[0].volumeMounts[0].name\n" +
-		"spec.containers[0].volumeMounts[0].readOnly\n")
+	fmt.Println()
+	fmt.Println("Examples:")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx -e spec.containers")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --keys")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --values")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --tree")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --find image")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --grep nginx")
+	fmt.Println(" $ kubectl walk -f file.yaml")
 	fmt.Println()
 
 	fmt.Println("Usage:")
 	pflag.PrintDefaults()
+}
+
+func sanitizeArgs() {
+	if valuesOnly && keysOnly {
+		fmt.Println("error: --values and --keys cannot be used together")
+		os.Exit(1)
+	}
+
+	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {
+		fmt.Println("Warning: --tree ignores --keys, --values, --grep, --find")
+	}
+
+	if help {
+		printUsage()
+		return
+	}
+
+	if showVersion {
+		fmt.Printf("kubectl-walk %s (built with Go %s)\n", version, runtime.Version()) // go build -ldflags="-X main.version=v1.0.0 -s -w"
+		return
+	}
 }
