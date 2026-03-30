@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -19,11 +20,34 @@ func main() {
 	var err error
 	out := os.Stdout
 
+	// stdin support: cat file.yaml | kubectl walk
+	stat, _ := os.Stdin.Stat()
+	if (stat.Mode() & os.ModeCharDevice) == 0 {
+		data, err := io.ReadAll(os.Stdin)
+		if err != nil {
+			fmt.Println("error: error reading stdin:", err)
+			return
+		}
+
+		var yamlRoot yaml.Node
+		if err := yaml.Unmarshal(data, &yamlRoot); err != nil {
+			fmt.Println("error: error parsing yaml:", err)
+			return
+		}
+
+		rootNode := yamlRoot.Content[0]
+
+		if err := processYaml(rootNode, out); err != nil {
+			fmt.Println("error:", err)
+		}
+		return
+	}
+
 	// Create a file if -o provided
 	if outputFile != "" {
 		out, err = os.Create(outputFile)
 		if err != nil {
-			fmt.Println("error: ", err)
+			fmt.Println(err)
 			return
 		}
 		defer out.Close()
@@ -35,7 +59,7 @@ func main() {
 	if file != "" {
 		rootNode, err = loadYamlFromFile(file)
 		if err != nil {
-			fmt.Println("error: ", err)
+			fmt.Println(err)
 			return
 		}
 	} else {
@@ -49,12 +73,12 @@ func main() {
 
 		rootNode, err = loadYamlFromCluster(kind, namespace, name)
 		if err != nil {
-			fmt.Println("error: ", err)
+			fmt.Println(err)
 			return
 		}
 	}
 
 	if err := processYaml(rootNode, out); err != nil {
-		fmt.Println("error: ", err)
+		fmt.Println(err)
 	}
 }
