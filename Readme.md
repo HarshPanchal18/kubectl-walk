@@ -78,11 +78,13 @@ kubectl plugin list
 # Inspect a live Kubernetes object (requires kubeconfig)
 kubectl walk pod nginx -n default
 
-# Flatten only a subtree
+# Flatten only a subtree of containers
 kubectl walk pod nginx -n default -e spec.containers
 
 # Read from a YAML file instead of the cluster
 kubectl walk -f example.yaml -e spec.containers
+# Or, via
+cat example.yaml | kubectl walk -e spec.containers
 
 # Write output to a file
 kubectl walk -f example.yaml -e spec.containers -o output.txt
@@ -90,7 +92,7 @@ kubectl walk -f example.yaml -e spec.containers -o output.txt
 
 ## Usefulness
 
-- **Discovering fields**
+- **Discovering fields easier**
+- **Documenting the configuration of one or more fields**
+- **Writing OPA policies or Kyverno rules**
 - **Writing jsonpath**
-- **Writing policies**
-- **Writing Kyverno rules**
