@@ -16,6 +16,11 @@ var version = "dev"
 
 // Resolve kubernetes resource identifier
 func resolveKind(input string) string {
+    if strings.Contains(input, ".") {
+        parts := strings.Split(input, ".")
+        input = parts[0]
+    }
+
 	switch input {
     case "po", "pod", "pods":
         return "pod"
