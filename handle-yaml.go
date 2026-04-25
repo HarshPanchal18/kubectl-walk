@@ -7,18 +7,7 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
-
-func serializeObject(obj runtime.Object) ([]byte, error) {
-	scheme := runtime.NewScheme()
-	serializer := json.NewSerializerWithOptions(
-		json.DefaultMetaFactory, scheme, scheme,
-		json.SerializerOptions{Yaml: true},
-	)
-	return runtime.Encode(serializer, obj)
-}
 
 // mapping node: get value for key
 func getMapValue(node *yaml.Node, key string) *yaml.Node {

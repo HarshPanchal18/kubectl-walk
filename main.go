@@ -8,6 +8,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"gopkg.in/yaml.v3"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
 func main() {
@@ -65,13 +66,26 @@ func main() {
 	} else {
 		args := pflag.Args()
 		if len(args) < 2 {
-			fmt.Println("error: kind and name required")
+			fmt.Println(fmt.Errorf("error: insufficient parameters"))
 			return
 		}
-		kind := resolveKind(strings.ToLower(args[0]))
+
+		kind := strings.ToLower(args[0])
 		name := strings.ToLower(args[1])
 
-		rootNode, err = loadYamlFromCluster(kind, namespace, name)
+		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
+		if err != nil {
+			fmt.Println(fmt.Errorf("error connecting Kubernetes: %w", err))
+			return
+		}
+
+		gvr, err := resolveGVR(restConfig, kind)
+		if err != nil {
+			fmt.Println("error:", err)
+			return
+		}
+
+		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespace, name)
 		if err != nil {
 			fmt.Println(err)
 			return
