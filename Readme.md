@@ -1,6 +1,6 @@
 # kubectl-walk - explore Kubernetes YAML like a human — not like a machine
 
-Lightweight CLI tool to flatten, filters, and visualizes nested fields of Kubernetes objects or YAML files. Handy and useful during documenting important field(s) instead of digging nested block.
+A `kubectl krew` plugin to flatten, filters, and visualizes nested fields of Kubernetes objects or YAML files. Handy and useful during documenting important field(s) instead of digging nested block.
 
 Supports any YAML that ever exists, not only for Kubernetes resource(s).
 
@@ -219,6 +219,26 @@ helm template . | kubectl walk --tree
 | `--tree`, `-t` | Show fields in tree branch structure. |
 | `--values` | Include values only. Takes priority when provided with `--keys`. |
 
+## Usage
+
+```bash
+# Inspect a live Kubernetes object (requires kubeconfig)
+kubectl walk pod nginx -n default
+
+# Flatten only a subtree of containers
+kubectl walk pod nginx -n default -e spec.containers
+
+# Read from a YAML file instead of the cluster
+kubectl walk -f example.yaml -e spec.containers
+# Or, via
+cat example.yaml | kubectl walk -e spec.containers
+
+# Write output to a file
+kubectl walk -f example.yaml -e spec.containers -o output.txt
+
+#
+```
+
 ## Overview
 
 ### Standard YAML
@@ -266,22 +286,4 @@ export PATH=$PATH:~/.local/bin
 
 # Verify kubectl detects the plugin
 kubectl plugin list
-```
-
-## Usage
-
-```bash
-# Inspect a live Kubernetes object (requires kubeconfig)
-kubectl walk pod nginx -n default
-
-# Flatten only a subtree of containers
-kubectl walk pod nginx -n default -e spec.containers
-
-# Read from a YAML file instead of the cluster
-kubectl walk -f example.yaml -e spec.containers
-# Or, via
-cat example.yaml | kubectl walk -e spec.containers
-
-# Write output to a file
-kubectl walk -f example.yaml -e spec.containers -o output.txt
 ```
