@@ -10,14 +10,14 @@ spec:
         os: linux
         arch: amd64
     uri: https://github.com/HarshPanchal18/kubectl-walk/releases/download/v0.1.3/kubectl-walk-linux-amd64.tar.gz
-    sha256: "0b8c13b992f83f9c3cbe9d5d42a66e2ad3a09c8a92553a3a6408fde77c2e219f"
+    sha256: "b2913a8ba4a7ce90cadd91c1e5f3ef199fe8e4a728af8170575d331ed07eb132"
     bin: kubectl-walk-linux-amd64
   - selector:
       matchLabels:
         os: darwin
         arch: amd64
     uri: https://github.com/HarshPanchal18/kubectl-walk/releases/download/v0.1.3/kubectl-walk-darwin-amd64.tar.gz
-    sha256: "b2913a8ba4a7ce90cadd91c1e5f3ef199fe8e4a728af8170575d331ed07eb132"
+    sha256: "597dd1364ef1c1c811bf3adba621007705109a0557176f4d7ad8416fe7fd98f0"
     bin: kubectl-walk-darwin-amd64
   - selector:
       matchLabels:
@@ -31,7 +31,7 @@ spec:
         os: windows
         arch: amd64
     uri: https://github.com/HarshPanchal18/kubectl-walk/releases/download/v0.1.3/kubectl-walk-windows-amd64.zip
-    sha256: "73a5f4f09a62edd7a880cdd61d0278b7eddd8b7ad6b136e7b6236735d2a560c5"
+    sha256: "b3716f924f0af083ba254b21533c13a61d3eadc4eb6649feb54a04534e15be47"
     bin: kubectl-walk-windows-amd64.exe
   shortDescription: "Explore Kubernetes YAML like a human — not like a machine"
   description: |
