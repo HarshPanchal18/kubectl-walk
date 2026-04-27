@@ -50,7 +50,7 @@ func prepareCliFlags() {
 }
 
 func printUsage() {
-	fmt.Println("Flatten nested objects of the YAML.")
+	fmt.Println("Explore Kubernetes YAML like a human — not like a machine")
 
 	fmt.Println()
 	fmt.Println("Examples:")

@@ -1,5 +1,4 @@
 *.txt
-*.yaml
 *.yml
 
-*-walk
+*kubectl-walk*
