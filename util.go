@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"strings"
+	"slices"
 
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
@@ -44,6 +45,7 @@ func resolveGVR(config *rest.Config, input string) (schema.GroupVersionResource,
 
 			name := strings.ToLower(r.Name) // plural
 			kind := strings.ToLower(r.Kind)
+			shortNames := r.ShortNames
 
 			full := name
 			if gv.Group != "" {
@@ -52,6 +54,7 @@ func resolveGVR(config *rest.Config, input string) (schema.GroupVersionResource,
 
 			// Match cases:
 			if input == name ||     // networkpolicies
+				slices.Contains(shortNames, input) ||
 				input == kind ||    // networkpolicy
 				input == full {     // networkpolicies.networking.k8s.io
 				return schema.GroupVersionResource{
