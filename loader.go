@@ -12,7 +12,7 @@ import (
 	"k8s.io/client-go/rest"
 )
 
-func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespace, name string) (*yaml.Node, error) {
+func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name string) (*yaml.Node, error) {
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
@@ -21,10 +21,10 @@ func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, n
 
 	var resource dynamic.ResourceInterface
 
-	if namespace == "" {
-		resource = dynamicClient.Resource(gvr)
-	} else {
+	if namespaced { // Ignore -n silently
 		resource = dynamicClient.Resource(gvr).Namespace(namespace)
+	} else {
+		resource = dynamicClient.Resource(gvr)
 	}
 
 	object, err := resource.Get(context.TODO(), name, metav1.GetOptions{})

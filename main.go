@@ -79,13 +79,13 @@ func main() {
 			return
 		}
 
-		gvr, err := resolveGVR(restConfig, kind)
+		gvr, namespaced, err := resolveGVR(restConfig, kind)
 		if err != nil {
 			fmt.Println("error:", err)
 			return
 		}
 
-		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespace, name)
+		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name)
 		if err != nil {
 			fmt.Println(err)
 			return
