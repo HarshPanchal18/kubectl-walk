@@ -272,12 +272,8 @@ spec.containers[0].name: nginx-pod
 ## Build and Test on local
 
 ```bash
-# Build the binary from the repository root
-go build -o kubectl-walk
-
-# Put binary into the $PATH
-chmod +x kubectl-walk
-mv kubectl-walk ~/.local/bin
+# Build the binary from the repository root and move to the ~/.local/bin directory
+make apply
 
 # Make sure ~/.local/bin is in your PATH.
 echo $PATH

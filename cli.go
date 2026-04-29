@@ -10,21 +10,21 @@ import (
 
 // Supported CLI flags
 var (
-	help bool
-	namespace string
-	entry string
-	file string
-	outputFile string
-	kubeConfigPath string
-	pure bool
-	depth int
-	includeEmpty bool
-	grep string
-	keysOnly bool
-	tree bool
-	find string
-	valuesOnly bool
-	showVersion bool
+	help 		 	bool
+	namespace 	 	string
+	entry 			string
+	file 			string
+	outputFile 		string
+	kubeConfigPath 	string
+	pure 			bool
+	depth 			int
+	includeEmpty 	bool
+	grep 			string
+	keysOnly 		bool
+	tree 			bool
+	find 			string
+	valuesOnly 		bool
+	showVersion 	bool
 )
 
 func prepareCliFlags() {
@@ -54,6 +54,7 @@ func printUsage() {
 
 	fmt.Println()
 	fmt.Println("Examples:")
+	fmt.Println(" $ kubectl walk ns default")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx -e spec.containers")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --keys")
@@ -69,6 +70,22 @@ func printUsage() {
 }
 
 func sanitizeArgs() {
+
+	if help {
+		printUsage()
+		os.Exit(0)
+	}
+
+	if showVersion {
+		fmt.Printf("kubectl-walk %s (built with Go %s)\n", version, runtime.Version()) // go build -ldflags="-X main.version=v1.0.0 -s -w"
+		os.Exit(0)
+	}
+
+	if len(pflag.Args()) == 0 {
+		printUsage()
+		os.Exit(0)
+	}
+
 	if valuesOnly && keysOnly {
 		fmt.Println("error: --values and --keys cannot be used together")
 		os.Exit(1)
@@ -76,15 +93,5 @@ func sanitizeArgs() {
 
 	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {
 		fmt.Println("Warning: --tree ignores --keys, --values, --grep, --find")
-	}
-
-	if help {
-		printUsage()
-		return
-	}
-
-	if showVersion {
-		fmt.Printf("kubectl-walk %s (built with Go %s)\n", version, runtime.Version()) // go build -ldflags="-X main.version=v1.0.0 -s -w"
-		return
 	}
 }

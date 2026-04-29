@@ -83,9 +83,9 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		// list index: containers[0]
 		if strings.Contains(part, "[") {
 			// extract name and the index between '[' and ']'
-			name := part[:strings.Index(part, "[")]
+			name        := part[:strings.Index(part, "[")]
 			indexString := part[strings.Index(part, "[") + 1:strings.Index(part, "]")]
-			index, _ := strconv.Atoi(indexString)
+			index, _    := strconv.Atoi(indexString)
 
 			// child object
 			child := getMapValue(current, name)
