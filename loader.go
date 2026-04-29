@@ -7,18 +7,21 @@ import (
 
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name string) (*yaml.Node, error) {
+func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string) (*yaml.Node, error) {
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
+	var object *unstructured.Unstructured
 	var resource dynamic.ResourceInterface
 
 	if namespaced { // Ignore -n silently
@@ -27,9 +30,22 @@ func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, n
 		resource = dynamicClient.Resource(gvr)
 	}
 
-	object, err := resource.Get(context.TODO(), name, metav1.GetOptions{})
-	if err != nil {
-		return nil, fmt.Errorf("error: %w", err)
+	if labelSelector != "" {
+		list, err := resource.List(context.TODO(), metav1.ListOptions{LabelSelector: labelSelector})
+		if err != nil {
+			return nil, err
+		}
+
+		if len(list.Items) == 0 {
+			return nil, fmt.Errorf("error: no resources found for selector: %s", labelSelector)
+		}
+
+		object = &list.Items[0]
+	} else {
+		object, err = resource.Get(context.TODO(), name, metav1.GetOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("error: %w", err)
+		}
 	}
 
 	yamlBytes, err := yaml.Marshal(object.Object)
@@ -57,4 +73,16 @@ func loadYamlFromFile(file string) (*yaml.Node, error) {
 	}
 
 	return yamlRoot.Content[0], nil
+}
+
+func getCurrentNamespace() string {
+	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
+	kubeConfig   := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
+
+	ns, _, err := kubeConfig.Namespace()
+	if err != nil || ns == "" {
+		return "default"
+	}
+
+	return ns
 }

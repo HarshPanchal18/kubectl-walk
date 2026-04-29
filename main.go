@@ -65,13 +65,22 @@ func main() {
 		}
 	} else {
 		args := pflag.Args()
-		if len(args) < 2 {
+
+		if len(args) < 2 && labelSelector == "" {
 			fmt.Println(fmt.Errorf("error: insufficient parameters"))
 			return
 		}
 
+		if labelSelector != "" && len(args) >= 2 {
+			fmt.Println("error: name cannot be provided when a selector is specified")
+			return
+		}
+
 		kind := strings.ToLower(args[0])
-		name := strings.ToLower(args[1])
+		var name string
+		if labelSelector == "" {
+			name = strings.ToLower(args[1])
+		}
 
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 		if err != nil {
@@ -85,7 +94,7 @@ func main() {
 			return
 		}
 
-		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name)
+		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name, labelSelector)
 		if err != nil {
 			fmt.Println(err)
 			return

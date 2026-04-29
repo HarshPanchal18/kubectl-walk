@@ -10,31 +10,33 @@ import (
 
 // Supported CLI flags
 var (
-	help 		 	bool
 	namespace 	 	string
 	entry 			string
 	file 			string
 	outputFile 		string
 	kubeConfigPath 	string
-	pure 			bool
-	depth 			int
-	includeEmpty 	bool
 	grep 			string
+	find 			string
+	labelSelector	string
+	help 		 	bool
+	pure 			bool
+	includeEmpty 	bool
 	keysOnly 		bool
 	tree 			bool
-	find 			string
 	valuesOnly 		bool
 	showVersion 	bool
+	depth 			int
 )
 
 func prepareCliFlags() {
-	pflag.StringVarP(&namespace, "namespace", "n", "default", "Namespace of resource")
+	pflag.StringVarP(&namespace, "namespace", "n", "", "Namespace of resource")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
 	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
 	pflag.StringVar(&find, "find", "", "Search paths by field name")
+	pflag.StringVarP(&labelSelector, "selector", "l", "", "Label selector (e.g. app=nginx)")
 
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
@@ -93,5 +95,9 @@ func sanitizeArgs() {
 
 	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {
 		fmt.Println("Warning: --tree ignores --keys, --values, --grep, --find")
+	}
+
+	if namespace == "" {
+		namespace = getCurrentNamespace()
 	}
 }
