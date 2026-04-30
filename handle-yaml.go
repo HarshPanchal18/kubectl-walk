@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"io"
+	"os"
 	"strconv"
 	"strings"
 
@@ -106,7 +107,9 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		// regular map key, no list
         next := getMapValue(current, part)
         if next == nil {
-            return nil, fmt.Errorf("invalid format/entrypoint provided: %s", entrypoint)
+            // return nil, fmt.Errorf("invalid format/entrypoint provided: %s", entrypoint)
+            fmt.Println("invalid format/entrypoint provided:", entrypoint)
+			os.Exit(0)
         }
 
 		current = next

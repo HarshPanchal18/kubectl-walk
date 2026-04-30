@@ -54,11 +54,11 @@ func main() {
 		defer out.Close()
 	}
 
-	var rootNode *yaml.Node
+	var nodes []*yaml.Node
 
 	// Read from .yaml file
 	if file != "" {
-		rootNode, err = loadYamlFromFile(file)
+		nodes, err = loadYamlFromFile(file)
 		if err != nil {
 			fmt.Println(err)
 			return
@@ -67,7 +67,7 @@ func main() {
 		args := pflag.Args()
 
 		if len(args) < 2 && labelSelector == "" {
-			fmt.Println(fmt.Errorf("error: insufficient parameters"))
+			fmt.Println(fmt.Errorf("error: insufficient parameter provided"))
 			return
 		}
 
@@ -84,7 +84,7 @@ func main() {
 
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 		if err != nil {
-			fmt.Println(fmt.Errorf("error connecting Kubernetes: %w", err))
+			fmt.Println("error: error while connecting Kubernetes:", err)
 			return
 		}
 
@@ -94,14 +94,17 @@ func main() {
 			return
 		}
 
-		rootNode, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name, labelSelector)
+		nodes, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name, labelSelector)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 	}
 
-	if err := processYaml(rootNode, out); err != nil {
-		fmt.Println(err)
+	for _, node := range nodes {
+		if err := processYaml(node, out); err != nil {
+			fmt.Println(err)
+		}
+		fmt.Println("---")
 	}
 }

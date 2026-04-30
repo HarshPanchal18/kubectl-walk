@@ -14,14 +14,16 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
-func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string) (*yaml.Node, error) {
+func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string) ([]*yaml.Node, error) {
 
 	dynamicClient, err := dynamic.NewForConfig(config)
 	if err != nil {
 		return nil, err
 	}
 
-	var object *unstructured.Unstructured
+	var nodes []*yaml.Node
+	var items []unstructured.Unstructured
+
 	var resource dynamic.ResourceInterface
 
 	if namespaced { // Ignore -n silently
@@ -40,28 +42,40 @@ func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, n
 			return nil, fmt.Errorf("error: no resources found for selector: %s", labelSelector)
 		}
 
-		object = &list.Items[0]
+		items = list.Items
+		nodes = make([]*yaml.Node, len(items))
 	} else {
-		object, err = resource.Get(context.TODO(), name, metav1.GetOptions{})
+		object, err := resource.Get(context.TODO(), name, metav1.GetOptions{})
 		if err != nil {
 			return nil, fmt.Errorf("error: %w", err)
 		}
+
+		items = []unstructured.Unstructured{*object}
+		nodes = make([]*yaml.Node, len(items))
 	}
 
-	yamlBytes, err := yaml.Marshal(object.Object)
-	if err != nil {
-		return nil, fmt.Errorf("serialization error: %w", err)
+	for i, obj := range items {
+		yamlBytes, err := yaml.Marshal(obj.Object)
+		if err != nil {
+			return nil, fmt.Errorf("serialization error: %w", err)
+		}
+
+		var yamlRoot yaml.Node
+		if err := yaml.Unmarshal(yamlBytes, &yamlRoot); err != nil {
+			return nil, err
+		}
+
+		if len(yamlRoot.Content) == 0 {
+			continue
+		}
+
+		nodes[i] = yamlRoot.Content[0]
 	}
 
-	var yamlRoot yaml.Node
-	if err := yaml.Unmarshal(yamlBytes, &yamlRoot); err != nil {
-		return nil, err
-	}
-
-	return yamlRoot.Content[0], nil
+	return nodes, nil
 }
 
-func loadYamlFromFile(file string) (*yaml.Node, error) {
+func loadYamlFromFile(file string) ([]*yaml.Node, error) {
 	yamlBytes, err := os.ReadFile(file)
 	if err != nil {
 		return nil, fmt.Errorf("error reading file %s: %w", file, err)
@@ -72,7 +86,7 @@ func loadYamlFromFile(file string) (*yaml.Node, error) {
 		return nil, err
 	}
 
-	return yamlRoot.Content[0], nil
+	return []*yaml.Node{yamlRoot.Content[0]}, nil
 }
 
 func getCurrentNamespace() string {

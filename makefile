@@ -8,8 +8,9 @@ build:
 
 apply: build
 	chmod +x kubectl-walk
-	mv kubectl-walk ~/.local/bin
-# 	sudo mv kubectl-walk /usr/local/bin
+	cp kubectl-walk ~/.local/bin
+# or
+	sudo cp kubectl-walk /usr/local/bin
 
 pkg-bin:
 	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-linux-amd64
