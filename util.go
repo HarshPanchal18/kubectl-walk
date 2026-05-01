@@ -86,3 +86,7 @@ func findKey(val string) bool {
 func joinPath(path []string) string {
     return strings.Join(path, ".")
 }
+
+func isURL(path string) bool {
+	return strings.HasPrefix(path, "http://") || strings.HasPrefix(path, "https://")
+}

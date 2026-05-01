@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -20,29 +19,6 @@ func main() {
 
 	var err error
 	out := os.Stdout
-
-	// stdin support: cat file.yaml | kubectl walk
-	stat, _ := os.Stdin.Stat()
-	if (stat.Mode() & os.ModeCharDevice) == 0 {
-		data, err := io.ReadAll(os.Stdin)
-		if err != nil {
-			fmt.Println("error: error reading stdin:", err)
-			return
-		}
-
-		var yamlRoot yaml.Node
-		if err := yaml.Unmarshal(data, &yamlRoot); err != nil {
-			fmt.Println("error: error parsing yaml:", err)
-			return
-		}
-
-		rootNode := yamlRoot.Content[0]
-
-		if err := processYaml(rootNode, out); err != nil {
-			fmt.Println("error:", err)
-		}
-		return
-	}
 
 	// Create a file if -o provided
 	if outputFile != "" {
@@ -101,6 +77,7 @@ func main() {
 		}
 	}
 
+	// YAML is collected, make it flat
 	for _, node := range nodes {
 		if err := processYaml(node, out); err != nil {
 			fmt.Println(err)

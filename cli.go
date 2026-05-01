@@ -61,9 +61,9 @@ func printUsage() {
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx -e spec.containers")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --keys")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --values")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --tree")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --find image")
+	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --find port")
 	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --grep nginx")
+	fmt.Println(" $ kubectl walk node -l beta.kubernetes.io/arch=amd64 -e metadata.labels")
 	fmt.Println(" $ kubectl walk -f file.yaml")
 	fmt.Println()
 
@@ -83,7 +83,7 @@ func sanitizeArgs() {
 		os.Exit(0)
 	}
 
-	if len(pflag.Args()) == 0 {
+	if len(pflag.Args()) == 0 && file == "" {
 		printUsage()
 		os.Exit(0)
 	}

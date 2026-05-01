@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 
 	"gopkg.in/yaml.v3"
@@ -75,18 +77,66 @@ func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, n
 	return nodes, nil
 }
 
-func loadYamlFromFile(file string) ([]*yaml.Node, error) {
-	yamlBytes, err := os.ReadFile(file)
-	if err != nil {
-		return nil, fmt.Errorf("error reading file %s: %w", file, err)
+func loadYamlFromFile(source string) ([]*yaml.Node, error) {
+	var reader io.Reader
+
+	switch {
+	// cat Chart.yaml | kubectl walk -f -
+	case source == "-":
+		reader = os.Stdin
+
+	// kubectl walk -f https://yaml-url
+	case isURL(source):
+		response, err := http.Get(source)
+		if err != nil {
+			return nil, fmt.Errorf("error: error fetching URL: %w", err)
+		}
+
+		if response.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("error: error fetching URL: status %s", response.Status)
+		}
+		defer response.Body.Close()
+
+		reader = response.Body
+
+	// kubectl walk -f file.yaml
+	default:
+		file, err := os.Open(source)
+		if err != nil {
+			return nil, fmt.Errorf("error: error reading file %s: %w", source, err)
+		}
+
+		defer file.Close()
+		reader = file
 	}
 
-	var yamlRoot yaml.Node
-	if err := yaml.Unmarshal(yamlBytes, &yamlRoot); err != nil {
-		return nil, err
+	decoder := yaml.NewDecoder(reader)
+
+	var nodes []*yaml.Node
+
+	for {
+		var doc yaml.Node
+
+		err := decoder.Decode(&doc)
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		if len(doc.Content) == 0 {
+			continue
+		}
+
+		nodes = append(nodes, doc.Content[0])
 	}
 
-	return []*yaml.Node{yamlRoot.Content[0]}, nil
+	if len(nodes) == 0 {
+		return nil, fmt.Errorf("error: no valid YAML documents found")
+	}
+
+	return nodes, nil
 }
 
 func getCurrentNamespace() string {
