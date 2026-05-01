@@ -212,7 +212,8 @@ helm template . | kubectl walk --tree
 | `--grep`, `-g` | Search in values by substring |
 | `--help`, `-h` | Show help message. |
 | `--kubeconfig` | Path to kubeconfig (default `$HOME/.kube/config`). |
-| `--keys` | Include keys only. Ignoring values. |
+| `--keys`, `-k` | Include keys only. Ignoring values. |
+| `--selector`, `-l` | Label selector for Kubernetes resources (e.g. app=nginx) |
 | `--namespace`, `-n` | Namespace (default `default`) of resource. |
 | `--output`, `-o` | Write output to a file. |
 | `--pure`, `-p` | Strip auto-generated fields when walking. |

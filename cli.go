@@ -31,7 +31,7 @@ var (
 func prepareCliFlags() {
 	pflag.StringVarP(&namespace, "namespace", "n", "", "Namespace of resource")
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
-	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of kubernetes resource")
+	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of Kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
 	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
 	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
@@ -41,7 +41,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.BoolVarP(&includeEmpty, "all", "A", false, "Include empty values")
-	pflag.BoolVar(&keysOnly, "keys", false, "Include keys only")
+	pflag.BoolVarP(&keysOnly, "keys", "k", false, "Include keys only")
 	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
 	pflag.BoolVar(&valuesOnly, "values", false, "Include values only")
 	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
@@ -57,14 +57,15 @@ func printUsage() {
 	fmt.Println()
 	fmt.Println("Examples:")
 	fmt.Println(" $ kubectl walk ns default")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx -e spec.containers")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --keys")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --values")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --find port")
-	fmt.Println(" $ kubectl walk pod -n ns-web-nginx nginx --grep nginx")
+	fmt.Println(" $ kubectl walk pod nginx")
+	fmt.Println(" $ kubectl walk pod nginx -e spec.containers")
+	fmt.Println(" $ kubectl walk pod nginx --keys")
+	fmt.Println(" $ kubectl walk pod nginx --values")
+	fmt.Println(" $ kubectl walk svc svc-nginx --find port")
 	fmt.Println(" $ kubectl walk node -l beta.kubernetes.io/arch=amd64 -e metadata.labels")
 	fmt.Println(" $ kubectl walk -f file.yaml")
+	fmt.Println(" $ cat file.yaml | kubectl walk -f")
+	fmt.Println(" $ kubectl walk -f https://file-at-remote.yaml")
 	fmt.Println()
 
 	fmt.Println("Usage:")
@@ -83,7 +84,8 @@ func sanitizeArgs() {
 		os.Exit(0)
 	}
 
-	if len(pflag.Args()) == 0 && file == "" {
+	if (len(pflag.Args()) == 0 && file == "") ||  // No arguments provided
+	    (len(pflag.Args()) > 0 && file != "") {	  // No arguments is needed when -f <file>
 		printUsage()
 		os.Exit(0)
 	}

@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"time"
 
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -87,7 +88,8 @@ func loadYamlFromFile(source string) ([]*yaml.Node, error) {
 
 	// kubectl walk -f https://yaml-url
 	case isURL(source):
-		response, err := http.Get(source)
+		httpClient := &http.Client{Timeout: 10 * time.Second}
+		response, err := httpClient.Get(source)
 		if err != nil {
 			return nil, fmt.Errorf("error: error fetching URL: %w", err)
 		}
