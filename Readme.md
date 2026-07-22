@@ -10,6 +10,21 @@ Supports any YAML that ever exists, not only for Kubernetes resource(s).
 kubectl krew install walk
 ```
 
+## Shell completion
+
+Bash completion is included for both the standalone binary and the usual
+`kubectl walk` invocation. Source the bundled script after loading kubectl's
+own completion:
+
+```bash
+source <(kubectl completion bash)
+source /path/to/kubectl-walk/completions/kubectl-walk.bash
+```
+
+The completion suggests plugin flags, Kubernetes resource types, namespaces,
+and resource names from the active cluster. To load it automatically, place
+the script in your bash-completion directory or source it from `~/.bashrc`.
+
 ## CLI flags
 
 | Flag | Meaning |
