@@ -4,6 +4,98 @@ A `kubectl krew` plugin to flatten, filters, and visualizes nested fields of Kub
 
 Supports any YAML that ever exists, not only for Kubernetes resource(s).
 
+## Installation
+
+```bash
+kubectl krew install walk
+```
+
+## CLI flags
+
+| Flag | Meaning |
+|---|---|
+| `--all`, `-A` | Include empty object value. |
+| `--entry`, `-e` | Dotted entrypoint (e.g. `spec.template`) to start walking from. |
+| `--depth`, `-d` | Depth of walking down the path |
+| `--file`, `-f` | Read YAML from file instead of the cluster. |
+| `--find`, | Search in keys by substring |
+| `--grep`, `-g` | Search in values by substring |
+| `--help`, `-h` | Show help message. |
+| `--kubeconfig` | Path to kubeconfig (default `$HOME/.kube/config`). |
+| `--keys`, `-k` | Include keys only. Ignoring values. |
+| `--selector`, `-l` | Label selector for Kubernetes resources (e.g. app=nginx) |
+| `--namespace`, `-n` | Namespace (default `default`) of resource. |
+| `--output`, `-o` | Write output to a file. |
+| `--pure`, `-p` | Strip auto-generated fields when walking. |
+| `--tree`, `-t` | Show fields in tree branch structure. |
+| `--values` | Include values only. Takes priority when provided with `--keys`. |
+
+## Usage
+
+```bash
+# Inspect a live Kubernetes object (requires kubeconfig)
+kubectl walk pod nginx -n default
+
+# Flatten only a subtree of containers
+kubectl walk pod nginx -n default -e spec.containers
+
+# Read from a YAML file instead of the cluster
+kubectl walk -f example.yaml -e spec.containers
+# Or, via
+cat example.yaml | kubectl walk -e spec.containers
+
+# Write output to a file
+kubectl walk -f example.yaml -e spec.containers -o output.txt
+
+# Inspect cluster-scoped resources (i.e. namespace)
+kubectl walk ns default
+```
+
+## Overview
+
+### Standard YAML
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+    name: nginx-pod
+    namespace: default
+spec:
+    containers:
+      - image: nginx
+        imagePullPolicy: Always
+        name: nginx-pod
+```
+
+### Transformation
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata.name: nginx-pod
+metadata.namespace: default
+spec.containers[0].image: nginx
+spec.containers[0].imagePullPolicy: Always
+spec.containers[0].name: nginx-pod
+```
+
+## Build and Test on local
+
+```bash
+# Build the binary from the repository root and move to the ~/.local/bin directory
+make apply
+
+# Make sure ~/.local/bin is in your PATH.
+echo $PATH
+
+# Or add it via,
+export PATH=$PATH:~/.local/bin
+
+# Verify kubectl detects the plugin
+kubectl plugin list
+```
+
 ## Why this exists?
 
 ### 1. Explore Unknown Resources (CRDs)
@@ -199,89 +291,3 @@ helm template . | kubectl walk --tree
 - Inspect generated manifests easily.
 
 ---
-
-## CLI flags
-
-| Flag | Meaning |
-|---|---|
-| `--all`, `-A` | Include empty object value. |
-| `--entry`, `-e` | Dotted entrypoint (e.g. `spec.template`) to start walking from. |
-| `--depth`, `-d` | Depth of walking down the path |
-| `--file`, `-f` | Read YAML from file instead of the cluster. |
-| `--find`, | Search in keys by substring |
-| `--grep`, `-g` | Search in values by substring |
-| `--help`, `-h` | Show help message. |
-| `--kubeconfig` | Path to kubeconfig (default `$HOME/.kube/config`). |
-| `--keys`, `-k` | Include keys only. Ignoring values. |
-| `--selector`, `-l` | Label selector for Kubernetes resources (e.g. app=nginx) |
-| `--namespace`, `-n` | Namespace (default `default`) of resource. |
-| `--output`, `-o` | Write output to a file. |
-| `--pure`, `-p` | Strip auto-generated fields when walking. |
-| `--tree`, `-t` | Show fields in tree branch structure. |
-| `--values` | Include values only. Takes priority when provided with `--keys`. |
-
-## Usage
-
-```bash
-# Inspect a live Kubernetes object (requires kubeconfig)
-kubectl walk pod nginx -n default
-
-# Flatten only a subtree of containers
-kubectl walk pod nginx -n default -e spec.containers
-
-# Read from a YAML file instead of the cluster
-kubectl walk -f example.yaml -e spec.containers
-# Or, via
-cat example.yaml | kubectl walk -e spec.containers
-
-# Write output to a file
-kubectl walk -f example.yaml -e spec.containers -o output.txt
-
-# Inspect cluster-scoped resources (i.e. namespace)
-kubectl walk ns default
-```
-
-## Overview
-
-### Standard YAML
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata:
-    name: nginx-pod
-    namespace: default
-spec:
-    containers:
-      - image: nginx
-        imagePullPolicy: Always
-        name: nginx-pod
-```
-
-### Transformation
-
-```yaml
-apiVersion: v1
-kind: Pod
-metadata.name: nginx-pod
-metadata.namespace: default
-spec.containers[0].image: nginx
-spec.containers[0].imagePullPolicy: Always
-spec.containers[0].name: nginx-pod
-```
-
-## Build and Test on local
-
-```bash
-# Build the binary from the repository root and move to the ~/.local/bin directory
-make apply
-
-# Make sure ~/.local/bin is in your PATH.
-echo $PATH
-
-# Or add it via,
-export PATH=$PATH:~/.local/bin
-
-# Verify kubectl detects the plugin
-kubectl plugin list
-```
