@@ -77,6 +77,10 @@ func main() {
 		}
 	}
 
+	// Expand the Kubernets List object before applying kind.name prefix
+	nodes = expandListNodes(nodes)
+
+	// Apply prefix if there are multiple resources
 	usePrefixes := len(nodes) > 1 && !noPrefixes
 
 	// YAML is collected, make it flat

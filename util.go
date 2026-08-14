@@ -101,6 +101,40 @@ func resourcePrefix(node *yaml.Node) []string {
 	return []string{kind, name}
 }
 
+// return the individual resource nodes contained in a Kubernetes List object
+func expandListNode(node *yaml.Node) []*yaml.Node {
+	if node == nil || node.Kind != yaml.MappingNode {
+		return []*yaml.Node{node}
+	}
+
+	kindNode := getMapValue(node, "kind")
+
+	// Resource is not a Kubernetes List
+	if kindNode == nil || kindNode.Value != "List" {
+		return []*yaml.Node{node}
+	}
+
+	itemsNode := getMapValue(node, "items")
+
+	// A List without items is still a single node
+	if itemsNode == nil || itemsNode.Kind != yaml.SequenceNode {
+		return []*yaml.Node{node}
+	}
+
+	return itemsNode.Content
+}
+
+// expand the Kubernets List object before applying kind.name prefix
+func expandListNodes(nodes []*yaml.Node) []*yaml.Node {
+	var resources []*yaml.Node
+
+	for _, node := range nodes {
+		resources = append(resources, expandListNode(node)...)
+	}
+
+	return resources
+}
+
 func matchGrep(val string) bool {
 	if grep == "" {
 		return true
