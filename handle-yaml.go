@@ -52,12 +52,15 @@ func resolveEntryNode(root *yaml.Node, entry string) (*yaml.Node, []string, erro
 	return node, strings.Split(entry, "."), nil
 }
 
-func processYaml(rootNode *yaml.Node, out io.Writer) error {
+func processYaml(rootNode *yaml.Node, out io.Writer, prefix []string) error {
 
 	node, path, err := resolveEntryNode(rootNode, entry)
 	if err != nil {
 		return err
 	}
+
+	// Prefix identifies the resource when multiple resources are being processed
+	path = append(prefix, path...)
 
 	if tree {
 		fmt.Println(strings.Join(path,"."))

@@ -77,11 +77,20 @@ func main() {
 		}
 	}
 
+	usePrefixes := len(nodes) > 1 && !noPrefixes
+
 	// YAML is collected, make it flat
 	for _, node := range nodes {
-		if err := processYaml(node, out); err != nil {
+		var prefix []string
+
+		if usePrefixes {
+			prefix = resourcePrefix(node)
+		}
+
+		if err := processYaml(node, out, prefix); err != nil {
 			fmt.Println(err)
 		}
-		fmt.Println("---")
+
+		fmt.Fprintln(out, "---")
 	}
 }

@@ -1,5 +1,7 @@
 *.txt
 *.yml
+*.yaml
+*.exe
 
-*kubectl-walk$
+*kubectl-walk*
 .gocache/

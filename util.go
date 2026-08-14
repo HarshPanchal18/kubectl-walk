@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"gopkg.in/yaml.v3"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/rest"
@@ -43,8 +44,8 @@ func resolveGVR(config *rest.Config, input string) (schema.GroupVersionResource,
 		}
 
 		for _, r := range resource.APIResources {
-			name       := strings.ToLower(r.Name) // plural
-			kind       := strings.ToLower(r.Kind)
+			name := strings.ToLower(r.Name) // plural
+			kind := strings.ToLower(r.Kind)
 			shortNames := r.ShortNames
 
 			full := name
@@ -52,11 +53,11 @@ func resolveGVR(config *rest.Config, input string) (schema.GroupVersionResource,
 				full = name + "." + gv.Group
 			}
 
-														// Match cases:
-			if input == name ||     					// networkpolicies
-				slices.Contains(shortNames, input) || 	// netpol
-				input == kind ||    					// networkpolicy
-				input == full {     					// networkpolicies.networking.k8s.io
+			// Match cases:
+			if input == name || // networkpolicies
+				slices.Contains(shortNames, input) || // netpol
+				input == kind || // networkpolicy
+				input == full { // networkpolicies.networking.k8s.io
 				return schema.GroupVersionResource{
 					Group:    gv.Group,
 					Version:  gv.Version,
@@ -67,6 +68,37 @@ func resolveGVR(config *rest.Config, input string) (schema.GroupVersionResource,
 	}
 
 	return schema.GroupVersionResource{}, false, fmt.Errorf("resource not found: %s", input)
+}
+
+// return the prefix used to identify a Kubernetes resource when multiple resources
+func resourcePrefix(node *yaml.Node) []string {
+	if node == nil || node.Kind != yaml.MappingNode {
+		return nil
+	}
+
+	kindNode := getMapValue(node, "kind")
+	if kindNode == nil || kindNode.Kind != yaml.ScalarNode {
+		return nil
+	}
+
+	metadataNode := getMapValue(node, "metadata")
+	if metadataNode == nil || metadataNode.Kind != yaml.MappingNode {
+		return nil
+	}
+
+	nameNode := getMapValue(metadataNode, "name")
+	if nameNode == nil || nameNode.Kind != yaml.ScalarNode {
+		return nil
+	}
+
+	kind := strings.ToLower(strings.TrimSpace(kindNode.Value))
+	name := strings.ToLower(strings.TrimSpace(nameNode.Value))
+
+	if kind == "" || name == "" {
+		return nil
+	}
+
+	return []string{kind, name}
 }
 
 func matchGrep(val string) bool {
@@ -84,7 +116,7 @@ func findKey(val string) bool {
 }
 
 func joinPath(path []string) string {
-    return strings.Join(path, ".")
+	return strings.Join(path, ".")
 }
 
 func isURL(path string) bool {

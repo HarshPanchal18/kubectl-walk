@@ -10,22 +10,23 @@ import (
 
 // Supported CLI flags
 var (
-	namespace 	 	string
-	entry 			string
-	file 			string
-	outputFile 		string
-	kubeConfigPath 	string
-	grep 			string
-	find 			string
-	labelSelector	string
-	help 		 	bool
-	pure 			bool
-	includeEmpty 	bool
-	keysOnly 		bool
-	tree 			bool
-	valuesOnly 		bool
-	showVersion 	bool
-	depth 			int
+	namespace      string
+	entry          string
+	file           string
+	outputFile     string
+	kubeConfigPath string
+	grep           string
+	find           string
+	labelSelector  string
+	help           bool
+	pure           bool
+	includeEmpty   bool
+	keysOnly       bool
+	tree           bool
+	valuesOnly     bool
+	showVersion    bool
+	noPrefixes     bool
+	depth          int
 )
 
 func prepareCliFlags() {
@@ -33,7 +34,7 @@ func prepareCliFlags() {
 	pflag.StringVarP(&entry, "entry", "e", "", "Entrypoint of an object")
 	pflag.StringVarP(&file, "file", "f", "", "YAML file to read regardless of Kubernetes resource")
 	pflag.StringVarP(&outputFile, "output", "o", "", "Write inside file instead of stdin")
-	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME") + "/.kube/config", "Cluster Kubeconfig file")
+	pflag.StringVar(&kubeConfigPath, "kubeconfig", os.Getenv("HOME")+"/.kube/config", "Cluster Kubeconfig file")
 	pflag.StringVarP(&grep, "grep", "g", "", "Filter output paths by value substring")
 	pflag.StringVar(&find, "find", "", "Search paths by field name")
 	pflag.StringVarP(&labelSelector, "selector", "l", "", "Label selector (e.g. app=nginx)")
@@ -45,6 +46,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
 	pflag.BoolVar(&valuesOnly, "values", false, "Include values only")
 	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
+	pflag.BoolVar(&noPrefixes, "no-prefixes", false, "Disable resource prefixes when walking multiple objects")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
@@ -84,8 +86,8 @@ func sanitizeArgs() {
 		os.Exit(0)
 	}
 
-	if (len(pflag.Args()) == 0 && file == "") ||  // No arguments provided
-	    (len(pflag.Args()) > 0 && file != "") {	  // No arguments is needed when -f <file>
+	if (len(pflag.Args()) == 0 && file == "") || // No arguments provided
+		(len(pflag.Args()) > 0 && file != "") { // No arguments is needed when -f <file>
 		printUsage()
 		os.Exit(0)
 	}
