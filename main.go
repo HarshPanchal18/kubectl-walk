@@ -43,12 +43,12 @@ func main() {
 		args := pflag.Args()
 
 		if len(args) < 2 && labelSelector == "" {
-			fmt.Println(fmt.Errorf("error: insufficient parameter provided"))
+			fmt.Errorf("error: insufficient parameter provided")
 			return
 		}
 
 		if labelSelector != "" && len(args) >= 2 {
-			fmt.Println("error: name cannot be provided when a selector is specified")
+			fmt.Errorf("error: name cannot be provided when a selector is specified")
 			return
 		}
 
@@ -60,19 +60,19 @@ func main() {
 
 		restConfig, err := clientcmd.BuildConfigFromFlags("", kubeConfigPath)
 		if err != nil {
-			fmt.Println("error: error while connecting Kubernetes:", err)
+			fmt.Errorf("error: error while connecting Kubernetes:", err)
 			return
 		}
 
 		gvr, namespaced, err := resolveGVR(restConfig, kind)
 		if err != nil {
-			fmt.Println("error:", err)
+			fmt.Errorf("error:", err)
 			return
 		}
 
 		nodes, err = loadYamlFromCluster(restConfig, gvr, namespaced, namespace, name, labelSelector)
 		if err != nil {
-			fmt.Println(err)
+			fmt.Errorf("error:", err)
 			return
 		}
 	}

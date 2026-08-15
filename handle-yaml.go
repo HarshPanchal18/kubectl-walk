@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
-	"os"
 	"strconv"
 	"strings"
 
@@ -12,31 +12,31 @@ import (
 
 // mapping node: get value for key
 func getMapValue(node *yaml.Node, key string) *yaml.Node {
-    if node.Kind != yaml.MappingNode {
-        return nil
-    }
+	if node.Kind != yaml.MappingNode {
+		return nil
+	}
 
 	// Content[0] = key1, Content[1] = value1
 	// Content[1] = key2, Content[1] = value2...
-    for i := 0; i < len(node.Content); i += 2 {
+	for i := 0; i < len(node.Content); i += 2 {
 		if node.Content[i].Value == key {
 			// Value for a given key
-            return node.Content[i+1]
-        }
-    }
+			return node.Content[i+1]
+		}
+	}
 
-    return nil
+	return nil
 }
 
 func isEmptyNode(node *yaml.Node) bool {
-    switch node.Kind {
-    case yaml.ScalarNode:
-        return strings.TrimSpace(node.Value) == ""
-    case yaml.MappingNode, yaml.SequenceNode:
-        return len(node.Content) == 0
-    default:
-        return false
-    }
+	switch node.Kind {
+	case yaml.ScalarNode:
+		return strings.TrimSpace(node.Value) == ""
+	case yaml.MappingNode, yaml.SequenceNode:
+		return len(node.Content) == 0
+	default:
+		return false
+	}
 }
 
 func resolveEntryNode(root *yaml.Node, entry string) (*yaml.Node, []string, error) {
@@ -56,6 +56,24 @@ func processYaml(rootNode *yaml.Node, out io.Writer, prefix []string) error {
 
 	node, path, err := resolveEntryNode(rootNode, entry)
 	if err != nil {
+		// The requested entry may legitimately be absent from
+		// an individual resource when processing multiple resources.
+		//
+		// For example:
+		//   pod.pod-1.metadata.labels
+		//   pod.pod-2.metadata.labels: <not found>
+		//
+		// Do not fail the entire operation because one resource
+		// does not contain the requested field.
+
+		if errors.Is(err, ErrPathNotFound) {
+			path = append(prefix, strings.Split(entry, ".")...)
+
+			fmt.Fprintf(out, "%s: <not found>\n", strings.Join(path, "."))
+			return nil
+		}
+
+		// Actual malformed/invalid entrypoint.
 		return err
 	}
 
@@ -63,7 +81,7 @@ func processYaml(rootNode *yaml.Node, out io.Writer, prefix []string) error {
 	path = append(prefix, path...)
 
 	if tree {
-		fmt.Println(strings.Join(path,"."))
+		fmt.Fprintln(out, strings.Join(path, "."))
 		walkTree(node, "", out)
 		return nil
 	}
@@ -87,19 +105,23 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		// list index: containers[0]
 		if strings.Contains(part, "[") {
 			// extract name and the index between '[' and ']'
-			name        := part[:strings.Index(part, "[")]
-			indexString := part[strings.Index(part, "[") + 1:strings.Index(part, "]")]
-			index, _    := strconv.Atoi(indexString)
+			name := part[:strings.Index(part, "[")]
+			indexString := part[strings.Index(part, "[")+1 : strings.Index(part, "]")]
+
+			index, err := strconv.Atoi(indexString)
+			if err != nil {
+				return nil, fmt.Errorf("invalid list index: %s", indexString)
+			}
 
 			// child object
 			child := getMapValue(current, name)
 			if child == nil {
-				return nil, fmt.Errorf("key %s not found", name)
+				return nil, fmt.Errorf("%w: key %s", ErrPathNotFound, part)
 			}
 
 			// ensure list exists
-			if child.Kind != yaml.SequenceNode || index >= len(child.Content) {
-				return nil, fmt.Errorf("index [%d] out of range for %s", index, name)
+			if child.Kind != yaml.SequenceNode || index < 0 || index >= len(child.Content) {
+				return nil, fmt.Errorf("%w: index [%d] out of range for %s", ErrPathNotFound, index, name)
 			}
 
 			// move deeper into the list element
@@ -108,12 +130,10 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 		}
 
 		// regular map key, no list
-        next := getMapValue(current, part)
-        if next == nil {
-            // return nil, fmt.Errorf("invalid format/entrypoint provided: %s", entrypoint)
-            fmt.Println("invalid format/entrypoint provided:", entrypoint)
-			os.Exit(0)
-        }
+		next := getMapValue(current, part)
+		if next == nil {
+			return nil, fmt.Errorf("%w: key %s", ErrPathNotFound, part)
+		}
 
 		current = next
 	}

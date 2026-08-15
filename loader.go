@@ -42,7 +42,7 @@ func loadYamlFromCluster(config *rest.Config, gvr schema.GroupVersionResource, n
 		}
 
 		if len(list.Items) == 0 {
-			return nil, fmt.Errorf("error: no resources found for selector: %s", labelSelector)
+			return nil, fmt.Errorf("error: %w: %s", ErrResourceNotFound, labelSelector)
 		}
 
 		items = list.Items
@@ -91,11 +91,11 @@ func loadYamlFromFile(source string) ([]*yaml.Node, error) {
 		httpClient := &http.Client{Timeout: 10 * time.Second}
 		response, err := httpClient.Get(source)
 		if err != nil {
-			return nil, fmt.Errorf("error: error fetching URL: %w", err)
+			return nil, fmt.Errorf("error: error fetching URL: %s %w", response.Request.URL, err)
 		}
 
 		if response.StatusCode != http.StatusOK {
-			return nil, fmt.Errorf("error: error fetching URL: status %s", response.Status)
+			return nil, fmt.Errorf("error: error fetching URL: status %s %w", response.Status, err)
 		}
 		defer response.Body.Close()
 
@@ -143,7 +143,7 @@ func loadYamlFromFile(source string) ([]*yaml.Node, error) {
 
 func getCurrentNamespace() string {
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
-	kubeConfig   := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
+	kubeConfig := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, &clientcmd.ConfigOverrides{})
 
 	ns, _, err := kubeConfig.Namespace()
 	if err != nil || ns == "" {
