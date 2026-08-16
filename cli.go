@@ -26,6 +26,7 @@ var (
 	valuesOnly     bool
 	showVersion    bool
 	noPrefixes     bool
+	completion     bool
 	depth          int
 )
 
@@ -42,11 +43,12 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&help, "help", "h", false, "Print help")
 	pflag.BoolVarP(&pure, "pure", "p", false, "Strip auto-generated fields")
 	pflag.BoolVarP(&includeEmpty, "all", "A", false, "Include empty values")
-	pflag.BoolVarP(&keysOnly, "keys", "k", false, "Include keys only")
+	pflag.BoolVarP(&keysOnly, "keys", "k", false, "Include keys only. Ignore values.")
 	pflag.BoolVarP(&tree, "tree", "t", false, "Render YAML structure as tree")
 	pflag.BoolVar(&valuesOnly, "values", false, "Include values only")
 	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
 	pflag.BoolVar(&noPrefixes, "no-prefixes", false, "Disable resource prefixes when walking multiple objects")
+	pflag.BoolVar(&completion, "completion", false, "Print Bash completion script")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
@@ -54,7 +56,7 @@ func prepareCliFlags() {
 }
 
 func printUsage() {
-	fmt.Println("Explore Kubernetes YAML like a human — not like a machine")
+	fmt.Println("Interpret Kubernetes Resources like a human — not like a machine")
 
 	fmt.Println()
 	fmt.Println("Examples:")
@@ -78,23 +80,33 @@ func sanitizeArgs() {
 
 	if help {
 		printUsage()
-		os.Exit(0)
+		return
 	}
 
 	if showVersion {
 		fmt.Printf("kubectl-walk %s (built with Go %s)\n", version, runtime.Version()) // go build -ldflags="-X main.version=v1.0.0 -s -w"
-		os.Exit(0)
+		return
+	}
+
+	if completion {
+		if len(pflag.Args()) > 0 {
+			fmt.Println("error: --completion should not be followed by any argument")
+			return
+		}
+
+		printCompletion()
+		return
 	}
 
 	if (len(pflag.Args()) == 0 && file == "") || // No arguments provided
 		(len(pflag.Args()) > 0 && file != "") { // No arguments is needed when -f <file>
 		printUsage()
-		os.Exit(0)
+		return
 	}
 
 	if valuesOnly && keysOnly {
 		fmt.Println("error: --values and --keys cannot be used together")
-		os.Exit(1)
+		return
 	}
 
 	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {

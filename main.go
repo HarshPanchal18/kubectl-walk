@@ -14,7 +14,7 @@ func main() {
 
 	prepareCliFlags()
 
-	// Check --help and --version ahead of further execution
+	// Check --help, --version, --completion ahead of further execution
 	sanitizeArgs()
 
 	var err error

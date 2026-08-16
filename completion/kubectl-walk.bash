@@ -1,8 +1,8 @@
 # Bash completion for kubectl-walk.
 #
-# Source this file after the standard kubectl completion script. It completes
-# both `kubectl-walk` and `kubectl walk` without replacing kubectl's existing
-# completion for other commands.
+# Source this file after the standard kubectl completion script.
+# It completes both `kubectl-walk` and `kubectl walk` without
+# replacing kubectl's existing completion for other commands.
 
 # Resource completion
 _kubectl_walk_resource_types() {
@@ -144,7 +144,7 @@ _kubectl_walk() {
 
     # Flag completion
     if [[ $cur == -* ]]; then
-        COMPREPLY=( $(compgen -W '--all --depth --entry --file --find --grep --help --keys --kubeconfig --namespace --output --pure --selector --tree --values --version -A -d -e -f -g -h -k -l -n -o -p -t -v' -- "$cur") )
+        COMPREPLY=( $(compgen -W '--all --completion --depth --entry --file --find --grep --help --keys --kubeconfig --namespace --no-prefixes --output --pure --selector --tree --values --version -A -d -e -f -g -h -k -l -n -o -p -t -v' -- "$cur") )
         return
     fi
 
