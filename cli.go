@@ -27,6 +27,7 @@ var (
 	showVersion    bool
 	noPrefixes     bool
 	completion     bool
+	color          bool
 	depth          int
 )
 
@@ -49,6 +50,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
 	pflag.BoolVar(&noPrefixes, "no-prefixes", false, "Disable resource prefixes when walking multiple objects")
 	pflag.BoolVar(&completion, "completion", false, "Print Bash completion script")
+	pflag.BoolVar(&color, "color", false, "Print coloured keys")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 

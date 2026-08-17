@@ -3,7 +3,7 @@ kind: Plugin
 metadata:
   name: walk
 spec:
-  version: "v1.1.2"
+  version: "v1.2.0"
   platforms:
   - selector:
       matchLabels:
