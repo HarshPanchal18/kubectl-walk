@@ -4,26 +4,31 @@ metadata:
   name: walk
 spec:
   version: {{ .TagName }}
-  homepage: https://github.com/HarshPanchal18/kubectl-walk
   platforms:
   - selector:
       matchLabels:
         os: darwin
         arch: amd64
     {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-darwin-amd64.tar.gz" .TagName }}
-    bin: kubectl-walk
+    bin: kubectl-walk-darwin-amd64
   - selector:
       matchLabels:
         os: darwin
         arch: arm64
     {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-darwin-arm64.tar.gz" .TagName }}
-    bin: kubectl-walk
+    bin: kubectl-walk-darwin-arm64
   - selector:
       matchLabels:
         os: linux
         arch: amd64
     {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-linux-amd64.tar.gz" .TagName }}
-    bin: kubectl-walk
+    bin: kubectl-walk-linux-amd64
+  - selector:
+      matchLabels:
+        os: windows
+        arch: arm64
+    {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-windows-arm64.tar.gz" .TagName }}
+    bin: kubectl-walk-windows-arm64.exe
   shortDescription: "Explore Kubernetes YAML like a human — not like a machine"
   description: |
     kubectl-walk helps you to flatten, filters, and visualizes nested fields of Kubernetes objects or YAML files.
