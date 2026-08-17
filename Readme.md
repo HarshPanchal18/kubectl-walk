@@ -1,4 +1,4 @@
-# kubectl-walk - explore Kubernetes YAML like a human — not like a machine
+# `kubectl-walk` - interpret Kubernetes resources like a human — not like a machine
 
 A `kubectl krew` plugin to flatten, filters, and visualizes nested fields of Kubernetes objects or YAML files. Handy and useful during documenting important field(s) instead of digging nested block.
 
@@ -10,40 +10,58 @@ Supports any YAML that ever exists, not only for Kubernetes resource(s).
 kubectl krew install walk
 ```
 
-## Shell completion
+## Bash Completion
 
-Bash completion is included for both the standalone binary and the usual
-`kubectl walk` invocation. Source the bundled script after loading kubectl's
-own completion:
+`kubectl-walk` provides Bash completion for **resource types, resource names,
+namespaces, flags, and file paths.**
 
-```bash
-source <(kubectl completion bash)
-source /path/to/kubectl-walk/completions/kubectl-walk.bash
-```
+- Generate the completion script with:
 
-The completion suggests plugin flags, Kubernetes resource types, namespaces,
-and resource names from the active cluster. To load it automatically, place
-the script in your bash-completion directory or source it from `~/.bashrc`.
+  ```bash
+  kubectl walk --completion
+  ```
+
+- Enable for the current shell
+
+  ```bash
+  source <(kubectl walk --completion)
+  ```
+
+- Enable permanently
+
+  Create the Bash completion file:
+
+  ```bash
+  mkdir -p ~/.local/share/bash-completion/completions
+
+  kubectl walk --completion \
+    > ~/.local/share/bash-completion/completions/kubectl-walk
+  ```
+
+  Then restart your shell or reload Bash completion.
 
 ## CLI flags
 
 | Flag | Meaning |
 |---|---|
-| `--all`, `-A` | Include empty object value. |
-| `--entry`, `-e` | Dotted entrypoint (e.g. `spec.template`) to start walking from. |
-| `--depth`, `-d` | Depth of walking down the path |
-| `--file`, `-f` | Read YAML from file instead of the cluster. |
-| `--find`, | Search in keys by substring |
-| `--grep`, `-g` | Search in values by substring |
-| `--help`, `-h` | Show help message. |
-| `--kubeconfig` | Path to kubeconfig (default `$HOME/.kube/config`). |
-| `--keys`, `-k` | Include keys only. Ignoring values. |
-| `--selector`, `-l` | Label selector for Kubernetes resources (e.g. app=nginx) |
-| `--namespace`, `-n` | Namespace (default `default`) of resource. |
-| `--output`, `-o` | Write output to a file. |
-| `--pure`, `-p` | Strip auto-generated fields when walking. |
-| `--tree`, `-t` | Show fields in tree branch structure. |
-| `--values` | Include values only. Takes priority when provided with `--keys`. |
+|  -A, --all                 | Include empty values |
+|      --completion          | Print Bash completion script |
+|  -d, --depth int           | Depth of walking on keys (default -1) |
+|  -e, --entry string        | Entrypoint of an object |
+|  -f, --file string         | YAML file to read regardless of Kubernetes resource |
+|      --find string         | Search paths by field name |
+|  -g, --grep string         | Filter output paths by value substring |
+|  -h, --help                | Print help |
+|  -k, --keys                | Include keys only. Ignore values. |
+|      --kubeconfig string   | Cluster Kubeconfig file (default "/home/harsh/.kube/config") |
+|  -n, --namespace string    | Namespace of resource (defaults to `default`) |
+|      --no-prefixes         | Disable resource prefixes when walking multiple objects |
+|  -o, --output string       | Write inside file instead of stdin |
+|  -p, --pure                | Strip auto-generated fields |
+|  -l, --selector string     | Label selector for Kubernetes resources (e.g. app=nginx) |
+|  -t, --tree                | Render YAML structure as tree |
+|      --values              | Include values only. Takes priority when provided with `--keys` |
+|  -v, --version             | Print plugin version |
 
 ## Usage
 
@@ -110,199 +128,3 @@ export PATH=$PATH:~/.local/bin
 # Verify kubectl detects the plugin
 kubectl plugin list
 ```
-
-## Why this exists?
-
-### 1. Explore Unknown Resources (CRDs)
-
-When working with tools like Argo CD, Istio, or Prometheus, resources can be deeply nested and undocumented.
-
-```bash
-kubectl walk applications my-app --tree
-```
-
-- Quickly understand structure without digging docs.
-
----
-
-### 2. Discover Field Paths (Better than guessing JSONPath)
-
-Instead of trial-and-error:
-
-```bash
-kubectl get pod nginx -o jsonpath='{.spec.containers[0].image}'
-```
-
-Do:
-
-```bash
-kubectl walk pod nginx --find image
-```
-
-Instantly discover the correct path:
-
-```yaml
-spec.containers[0].image
-```
-
----
-
-### 3. Debug Kubernetes Resources Faster
-
-Find what’s wrong without scrolling massive YAML:
-
-```bash
-kubectl walk pod nginx --grep CrashLoop
-```
-
-- Extract only relevant lines.
-
----
-
-### 4. Focus on Specific Sections
-
-Avoid noise:
-
-```bash
-kubectl walk deployment api -e spec.template.spec
-```
-
-- Zoom directly into container configs.
-
----
-
-### 5. Flatten YAML for Readability
-
-Kubernetes YAML is deeply nested. Flatten it:
-
-```bash
-kubectl walk pod nginx
-```
-
-Output:
-
-```yaml
-...
-spec.containers[0].image: nginx
-spec.containers[0].name: web
-...
-```
-
-- Much easier to scan than raw YAML.
-
----
-
-### 6. Extract Only Keys (Schema Discovery)
-
-```bash
-kubectl walk pod nginx --keys
-```
-
-- Useful for:
-  - understanding structure
-  - building automation
-  - writing policies
-
----
-
-### 7. Extract Only Values (Quick Inspection)
-
-```bash
-kubectl walk pod nginx --values
-```
-
-- Great for:
-  - quick audits
-  - checking runtime values
-  - piping into scripts
-
----
-
-### 8. Visual Tree View
-
-```bash
-kubectl walk pod nginx --tree
-```
-
-Understand hierarchy instantly:
-
-```bash
-spec
-└── containers
-    └── [0]
-        ├── name
-        └── image
-```
-
----
-
-### 9. Search by Field Name
-
-```bash
-kubectl walk deployment api --find replicas
-```
-
-- Locate specific configuration fields quickly.
-
----
-
-### 10. Remove Kubernetes Noise
-
-Kubernetes adds a lot of auto-generated fields.
-
-```bash
-kubectl walk pod nginx --pure
-```
-
-- Removes:
-  - `status`
-  - `resourceVersion`
-  - `managedFields`
-  - etc.
-
----
-
-### 11. Work with Local Files
-
-```bash
-kubectl walk -f deployment.yaml
-```
-
-- No cluster required.
-
----
-
-### 12. Pipe from kubectl (Unix-style)
-
-```bash
-kubectl get pod nginx -o yaml | kubectl walk --find image
-```
-
-- Seamless CLI workflows.
-
----
-
-### 13. Control Depth of Exploration
-
-```bash
-kubectl walk pod nginx --depth 2
-```
-
-- Avoid overwhelming output.
-
----
-
-### 14. Debug Generated YAML (Helm, Kustomize)
-
-Works great with tools like:
-
-- Helm
-- Kustomize
-
-```bash
-helm template . | kubectl walk --tree
-```
-
-- Inspect generated manifests easily.
-
----
