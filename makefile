@@ -24,6 +24,6 @@ pkg-tar: pkg-bin
 	tar -czf kubectl-walk-darwin-arm64.tar.gz kubectl-walk-darwin-arm64 LICENSE
 	zip kubectl-walk-windows-amd64.zip kubectl-walk-windows-amd64.exe LICENSE
 
-sha: pkg-tar
+sha:
 	sha256sum kubectl-walk-*.tar.gz
 	sha256sum kubectl-walk-*.zip

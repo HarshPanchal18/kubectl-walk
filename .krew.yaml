@@ -1,0 +1,30 @@
+apiVersion: krew.googlecontainertools.github.com/v1alpha2
+kind: Plugin
+metadata:
+  name: walk
+spec:
+  version: {{ .TagName }}
+  homepage: https://github.com/HarshPanchal18/kubectl-walk
+  platforms:
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: amd64
+    {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-darwin-amd64.tar.gz" .TagName }}
+    bin: kubectl-walk
+  - selector:
+      matchLabels:
+        os: darwin
+        arch: arm64
+    {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-darwin-arm64.tar.gz" .TagName }}
+    bin: kubectl-walk
+  - selector:
+      matchLabels:
+        os: linux
+        arch: amd64
+    {{addURIAndSha "https://github.com/HarshPanchal18/kubectl-walk/releases/download/{{ .TagName }}/kubectl-walk-{{ .TagName }}-linux-amd64.tar.gz" .TagName }}
+    bin: kubectl-walk
+  shortDescription: "Explore Kubernetes YAML like a human — not like a machine"
+  description: |
+    kubectl-walk helps you to flatten, filters, and visualizes nested fields of Kubernetes objects or YAML files.
+  homepage: https://github.com/HarshPanchal18/kubectl-walk
