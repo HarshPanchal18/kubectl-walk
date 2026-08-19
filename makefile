@@ -1,4 +1,4 @@
-VERSION=v1.2.1
+VERSION=v1.2.2
 
 version:
 	@echo "$(VERSION)"
@@ -17,16 +17,16 @@ bin:
 	GOOS=windows GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk.exe
 
 pkg-bin:
-	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-$(VERSION)-linux-amd64
-	GOOS=darwin  GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-$(VERSION)-darwin-amd64
-	GOOS=darwin  GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-$(VERSION)-darwin-arm64
-	GOOS=windows GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-$(VERSION)-windows-arm64.exe
+	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk
+	GOOS=darwin  GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk
+	GOOS=darwin  GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk
+	GOOS=windows GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk.exe
 
 pkg-tar: pkg-bin
-	tar -czf kubectl-walk-$(VERSION)-linux-amd64.tar.gz kubectl-walk-$(VERSION)-linux-amd64 LICENSE
-	tar -czf kubectl-walk-$(VERSION)-darwin-amd64.tar.gz kubectl-walk-$(VERSION)-darwin-amd64 LICENSE
-	tar -czf kubectl-walk-$(VERSION)-darwin-arm64.tar.gz kubectl-walk-$(VERSION)-darwin-arm64 LICENSE
-	tar -czf kubectl-walk-$(VERSION)-windows-arm64.tar.gz kubectl-walk-$(VERSION)-windows-arm64.exe LICENSE
+	tar -czf kubectl-walk-$(VERSION)-linux-amd64.tar.gz kubectl-walk LICENSE
+	tar -czf kubectl-walk-$(VERSION)-darwin-amd64.tar.gz kubectl-walk LICENSE
+	tar -czf kubectl-walk-$(VERSION)-darwin-arm64.tar.gz kubectl-walk LICENSE
+	tar -czf kubectl-walk-$(VERSION)-windows-arm64.tar.gz kubectl-walk.exe LICENSE
 
 sha:
 	sha256sum kubectl-walk-*.tar.gz
