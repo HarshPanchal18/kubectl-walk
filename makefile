@@ -1,4 +1,4 @@
-VERSION=v1.2.0
+VERSION=v1.2.1
 
 version:
 	@echo "$(VERSION)"
@@ -11,6 +11,10 @@ apply: build
 	cp kubectl-walk ~/.local/bin
 # or
 # 	sudo cp kubectl-walk /usr/local/bin
+
+bin:
+	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk
+	GOOS=windows GOARCH=arm64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk.exe
 
 pkg-bin:
 	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk-$(VERSION)-linux-amd64
