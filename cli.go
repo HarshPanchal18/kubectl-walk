@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"runtime"
 
 	"github.com/spf13/pflag"
 )
@@ -27,7 +26,6 @@ var (
 	showVersion    bool
 	noPrefixes     bool
 	completion     bool
-	color          bool
 	depth          int
 )
 
@@ -50,7 +48,6 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&showVersion, "version", "v", false, "Print plugin version")
 	pflag.BoolVar(&noPrefixes, "no-prefixes", false, "Disable resource prefixes when walking multiple objects")
 	pflag.BoolVar(&completion, "completion", false, "Print Bash completion script")
-	pflag.BoolVar(&color, "color", false, "Print coloured keys")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
 
@@ -83,32 +80,33 @@ func sanitizeArgs() {
 	if help {
 		printUsage()
 		return
+		// os.Exit(0)
 	}
 
 	if showVersion {
-		fmt.Printf("kubectl-walk %s (built with Go %s)\n", version, runtime.Version()) // go build -ldflags="-X main.version=v1.0.0 -s -w"
-		return
+		fmt.Printf("kubectl-walk %s\n", version) // go build -ldflags="-X main.version=v1.0.0 -s -w"
+		os.Exit(0)
 	}
 
 	if completion {
 		if len(pflag.Args()) > 0 {
 			fmt.Println("error: --completion should not be followed by any argument")
-			return
+			os.Exit(0)
 		}
 
 		printCompletion()
-		return
+		os.Exit(0)
 	}
 
 	if (len(pflag.Args()) == 0 && file == "") || // No arguments provided
 		(len(pflag.Args()) > 0 && file != "") { // No arguments is needed when -f <file>
 		printUsage()
-		return
+		os.Exit(0)
 	}
 
 	if valuesOnly && keysOnly {
 		fmt.Println("error: --values and --keys cannot be used together")
-		return
+		os.Exit(0)
 	}
 
 	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {
