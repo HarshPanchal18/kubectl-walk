@@ -79,8 +79,7 @@ func sanitizeArgs() {
 
 	if help {
 		printUsage()
-		return
-		// os.Exit(0)
+		os.Exit(0)
 	}
 
 	if showVersion {
@@ -88,19 +87,19 @@ func sanitizeArgs() {
 		os.Exit(0)
 	}
 
-	if completion {
-		if len(pflag.Args()) > 0 {
-			fmt.Println("error: --completion should not be followed by any argument")
-			os.Exit(0)
-		}
+	argsCount := len(pflag.Args())
 
-		printCompletion()
+	if completion {
+		if argsCount > 0 {
+			fmt.Println("error: --completion should not be followed by any positional argument")
+		} else {
+			printCompletion()
+		}
 		os.Exit(0)
 	}
 
-	if (len(pflag.Args()) == 0 && file == "") || // No arguments provided
-		(len(pflag.Args()) > 0 && file != "") { // No arguments is needed when -f <file>
-		printUsage()
+	if argsCount > 0 && file != "" {
+		fmt.Println("error: no positional arguments are allowed other than flags when using the -f <file>")
 		os.Exit(0)
 	}
 
