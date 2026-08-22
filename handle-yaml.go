@@ -4,10 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"reflect"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/rest"
 )
 
 // mapping node: get value for key
@@ -139,4 +143,42 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 	}
 
 	return current, nil
+}
+
+func watchResources(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string, out io.Writer) error {
+	var previous []*yaml.Node
+
+	for {
+		nodes, err := loadYamlFromCluster(config, gvr, namespaced, namespace, name, labelSelector)
+
+		if err != nil {
+			return err
+		}
+
+		// only process the YAML if the resource is actually changed
+		if !isYamlNodeEquals(previous, nodes) {
+			for _, node := range nodes {
+				if err := processYaml(node, out, nil); err != nil {
+					return err
+				}
+			}
+			previous = nodes
+		}
+
+		time.Sleep(time.Second)
+	}
+}
+
+// compare YAMLs
+func isYamlNodeEquals(a, b []*yaml.Node) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	for i := range a {
+		if !reflect.DeepEqual(a[i], b[i]) {
+			return false
+		}
+	}
+	return true
 }
