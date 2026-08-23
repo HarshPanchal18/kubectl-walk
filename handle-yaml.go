@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
@@ -146,7 +147,7 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 }
 
 func watchResources(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string, out io.Writer) error {
-	var previous []*yaml.Node
+	var previousOutput string
 
 	for {
 		nodes, err := loadYamlFromCluster(config, gvr, namespaced, namespace, name, labelSelector)
@@ -155,16 +156,29 @@ func watchResources(config *rest.Config, gvr schema.GroupVersionResource, namesp
 			return err
 		}
 
-		// only process the YAML if the resource is actually changed
-		if !isYamlNodeEquals(previous, nodes) {
-			for _, node := range nodes {
-				if err := processYaml(node, out, nil); err != nil {
-					return err
-				}
+		var currentOutput bytes.Buffer
+
+		// Write output into buffer
+		for _, node := range nodes {
+			if err := processYaml(node, &currentOutput, nil); err != nil {
+				return err
 			}
-			previous = nodes
 		}
 
+		// Store the current buffer
+		current := currentOutput.String()
+
+		// Check buffer diff
+		if current != previousOutput {
+			if _, err := io.WriteString(out, current); err != nil {
+				return err
+			}
+
+			// Store output for the next iteration
+			previousOutput = current
+		}
+
+		// Check every second
 		time.Sleep(time.Second)
 	}
 }
