@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"reflect"
 	"strconv"
 	"strings"
 	"time"
@@ -146,8 +145,16 @@ func findNodeByPath(node *yaml.Node, entrypoint string) (*yaml.Node, error) {
 	return current, nil
 }
 
-func watchResources(config *rest.Config, gvr schema.GroupVersionResource, namespaced bool, namespace, name, labelSelector string, out io.Writer) error {
+func watchResources(
+	config *rest.Config,
+	gvr schema.GroupVersionResource,
+	namespaced bool,
+	namespace, name, labelSelector string,
+	out io.Writer,
+) error {
+
 	var previousOutput string
+	firstRun := true
 
 	for {
 		nodes, err := loadYamlFromCluster(config, gvr, namespaced, namespace, name, labelSelector)
@@ -156,43 +163,44 @@ func watchResources(config *rest.Config, gvr schema.GroupVersionResource, namesp
 			return err
 		}
 
-		var currentOutput bytes.Buffer
+		var current strings.Builder
 
 		// Write output into buffer
 		for _, node := range nodes {
-			if err := processYaml(node, &currentOutput, nil); err != nil {
+			rendered, err := renderYaml(node, nil)
+			if err != nil {
 				return err
 			}
+
+			current.WriteString(rendered)
 		}
 
 		// Store the current buffer
-		current := currentOutput.String()
+		currentOutput := current.String()
 
-		// Check buffer diff
-		if current != previousOutput {
-			if _, err := io.WriteString(out, current); err != nil {
-				return err
-			}
-
-			// Store output for the next iteration
-			previousOutput = current
+		// Handle the separator between changes
+		if firstRun {
+			fmt.Fprint(out, currentOutput)
+			firstRun = false
+		} else if currentOutput != previousOutput { // Check buffer diff
+			fmt.Fprintln(out, "---")
+			fmt.Fprint(out, currentOutput)
 		}
+
+		// Store output for the next iteration
+		previousOutput = currentOutput
 
 		// Check every second
 		time.Sleep(time.Second)
 	}
 }
 
-// compare YAMLs
-func isYamlNodeEquals(a, b []*yaml.Node) bool {
-	if len(a) != len(b) {
-		return false
+func renderYaml(rootNode *yaml.Node, prefix []string) (string, error) {
+	var buf bytes.Buffer
+
+	if err := processYaml(rootNode, &buf, prefix); err != nil {
+		return "", err
 	}
 
-	for i := range a {
-		if !reflect.DeepEqual(a[i], b[i]) {
-			return false
-		}
-	}
-	return true
+	return buf.String(), nil
 }

@@ -29,7 +29,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		}
 
 		for i := 0; i < len(node.Content); i += 2 {
-			keyNode   := node.Content[i]
+			keyNode := node.Content[i]
 			valueNode := node.Content[i+1]
 
 			// Skip the ladder
@@ -52,7 +52,7 @@ func walk(node *yaml.Node, path []string, out io.Writer, remain int) {
 		}
 
 		for i, item := range node.Content {
-			p           := append([]string{}, path...)
+			p := append([]string{}, path...)
 			p[len(p)-1] += fmt.Sprintf("[%d]", i)
 			walk(item, p, out, nextRem)
 		}
@@ -159,13 +159,13 @@ func walkTree(node *yaml.Node, prefix string, out io.Writer) {
 				continue
 			}
 
-			last := (i/2) == count - 1
+			last := (i / 2) == count-1
 
-			connector  := "├── "
+			connector := "├── "
 			nextPrefix := prefix + "│   "
 
 			if last {
-				connector  = "└── "
+				connector = "└── "
 				nextPrefix = prefix + "    "
 			}
 
@@ -182,13 +182,13 @@ func walkTree(node *yaml.Node, prefix string, out io.Writer) {
 
 		for i, item := range node.Content {
 
-			last := i == len(node.Content) - 1
+			last := i == len(node.Content)-1
 
-			connector  := "├── "
+			connector := "├── "
 			nextPrefix := prefix + "│   "
 
 			if last {
-				connector  = "└── "
+				connector = "└── "
 				nextPrefix = prefix + "    "
 			}
 

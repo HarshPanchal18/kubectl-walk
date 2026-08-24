@@ -4,6 +4,7 @@ version:
 	@echo "$(VERSION)"
 
 build:
+	go fmt .
 	go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk
 
 apply: build

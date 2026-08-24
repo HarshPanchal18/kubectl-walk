@@ -26,7 +26,7 @@ var (
 	showVersion    bool
 	noPrefixes     bool
 	completion     bool
-	watch		   bool
+	watch          bool
 	depth          int
 )
 
