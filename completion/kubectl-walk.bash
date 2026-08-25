@@ -123,10 +123,10 @@ _kubectl_walk() {
                 ;;
 
         # Flags using --flag=value
-            --entry=*|--output=*|--kubeconfig=*|--grep=*|--find=*|--depth=*) ;;
+            --entry=*|--output=*|--kubeconfig=*|--grep=*|--find=*|--depth=*|--interval) ;;
 
         # Short flags using attached values
-            -e?*|-o?*|-g?*|-d?*) ;;
+            -e?*|-o?*|-g?*|-d?*|-i?*) ;;
 
         # Other flags
             -*) ;;
@@ -144,7 +144,7 @@ _kubectl_walk() {
 
     # Flag completion
     if [[ $cur == -* ]]; then
-        COMPREPLY=( $(compgen -W '--all --completion --depth --entry --file --find --grep --help --keys --kubeconfig --namespace --no-prefixes --output --pure --selector --tree --values --version -A -d -e -f -g -h -k -l -n -o -p -t -v' -- "$cur") )
+        COMPREPLY=( $(compgen -W '--all --completion --depth --entry --file --find --grep --help --interval --keys --kubeconfig --namespace --no-prefixes --output --pure --selector --tree --values --version --watch -A -d -e -f -g -h -i -k -l -n -o -p -t -v -w' -- "$cur") )
         return
     fi
 

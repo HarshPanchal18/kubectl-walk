@@ -190,8 +190,11 @@ func watchResources(
 		// Store output for the next iteration
 		previousOutput = currentOutput
 
-		// Check every second
-		time.Sleep(time.Second)
+		// Check on every interval second
+		if interval < 1 {
+			interval = 1
+		}
+		time.Sleep(time.Duration(interval) * time.Second)
 	}
 }
 
