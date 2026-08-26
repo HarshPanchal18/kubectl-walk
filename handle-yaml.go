@@ -191,10 +191,7 @@ func watchResources(
 		previousOutput = currentOutput
 
 		// Check on every interval second
-		if interval < 1 {
-			interval = 1
-		}
-		time.Sleep(time.Duration(interval) * time.Second)
+		time.Sleep(interval)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/spf13/pflag"
 )
@@ -28,7 +29,7 @@ var (
 	completion     bool
 	watch          bool
 	depth          int
-	interval       int
+	interval       time.Duration
 )
 
 func prepareCliFlags() {
@@ -53,7 +54,7 @@ func prepareCliFlags() {
 	pflag.BoolVarP(&watch, "watch", "w", false, "Watch the resource for change")
 
 	pflag.IntVarP(&depth, "depth", "d", -1, "Depth of walking on keys")
-	pflag.IntVarP(&interval, "interval", "i", 2, "Watch period for streaming the output")
+	pflag.DurationVarP(&interval, "interval", "i", time.Second, "Polling interval for --watch streams")
 
 	pflag.Parse()
 }
@@ -104,17 +105,22 @@ func sanitizeArgs() {
 
 	if argsCount > 0 && file != "" {
 		fmt.Println("error: no positional arguments are allowed other than flags when using the -f <file>")
-		os.Exit(0)
+		os.Exit(1)
 	}
 
-	if !watch && interval != 2 {
+	if !watch && pflag.CommandLine.Changed("interval") {
 		fmt.Println("error: -i/--interval is only applicable with -w/--watch")
-		os.Exit(0)
+		os.Exit(1)
+	}
+
+	if watch && interval < 100*time.Millisecond {
+		fmt.Println("interval must be at least 100ms")
+		os.Exit(1)
 	}
 
 	if valuesOnly && keysOnly {
 		fmt.Println("error: --values and --keys cannot be used together")
-		os.Exit(0)
+		os.Exit(1)
 	}
 
 	if tree && (keysOnly || valuesOnly || grep != "" || find != "") {
