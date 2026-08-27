@@ -52,16 +52,18 @@ namespaces, flags, and file paths.**
 |      --find string         | Search paths by field name |
 |  -g, --grep string         | Filter output paths by value substring |
 |  -h, --help                | Print help |
+|  -i, --interval            | Polling interval for `--watch` streams |
 |  -k, --keys                | Include keys only. Ignore values. |
-|      --kubeconfig string   | Cluster Kubeconfig file (default "/home/harsh/.kube/config") |
+|      --kubeconfig string   | Cluster Kubeconfig file (default **~/.kube/config**) |
 |  -n, --namespace string    | Namespace of resource (defaults to `default`) |
 |      --no-prefixes         | Disable resource prefixes when walking multiple objects |
 |  -o, --output string       | Write inside file instead of stdin |
 |  -p, --pure                | Strip auto-generated fields |
-|  -l, --selector string     | Label selector for Kubernetes resources (e.g. app=nginx) |
+|  -l, --selector string     | Label selector for Kubernetes resources (e.g. **app=nginx**) |
 |  -t, --tree                | Render YAML structure as tree |
 |      --values              | Include values only. Takes priority when provided with `--keys` |
 |  -v, --version             | Print plugin version |
+|  -w, --watch               | Watch the stream of changed values |
 
 ## Usage
 
@@ -82,6 +84,8 @@ kubectl walk -f example.yaml -e spec.containers -o output.txt
 
 # Inspect cluster-scoped resources (i.e. namespace)
 kubectl walk ns default
+
+# And lot more...
 ```
 
 ## Overview

@@ -10,8 +10,6 @@ build:
 apply: build
 	chmod +x kubectl-walk
 	cp kubectl-walk ~/.local/bin
-# OR
-# 	sudo cp kubectl-walk /usr/local/bin
 
 bin:
 	GOOS=linux   GOARCH=amd64 go build -ldflags="-X main.version=$(VERSION) -s -w" -o kubectl-walk

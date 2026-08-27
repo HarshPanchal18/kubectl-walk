@@ -67,6 +67,7 @@ func printUsage() {
 	fmt.Println(" $ kubectl walk ns default")
 	fmt.Println(" $ kubectl walk pod nginx")
 	fmt.Println(" $ kubectl walk pod nginx -e spec.containers")
+	fmt.Println(" $ kubectl walk pod nginx -e spec.containers -d 2")
 	fmt.Println(" $ kubectl walk pod nginx --keys")
 	fmt.Println(" $ kubectl walk pod nginx --values")
 	fmt.Println(" $ kubectl walk svc svc-nginx --find port")
@@ -74,6 +75,12 @@ func printUsage() {
 	fmt.Println(" $ kubectl walk -f file.yaml")
 	fmt.Println(" $ cat file.yaml | kubectl walk -f")
 	fmt.Println(" $ kubectl walk -f https://file-at-remote.yaml")
+	fmt.Println(" $ kubectl walk deploy nginx-deployment -e status --find Replica -w")
+	fmt.Println(" $ kubectl walk deploy nginx-deployment -e status --find Replica -wi 10s")
+	fmt.Println()
+
+	fmt.Println("Enable bash completion:")
+	fmt.Println("\t $ source <(kubectl walk --completion)")
 	fmt.Println()
 
 	fmt.Println("Usage:")
